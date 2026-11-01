@@ -1,0 +1,21 @@
+# сборка
+bin/
+obj/
+*.user
+.vs/
+.idea/
+
+# содержимое курса: собирается ContentBuilder'ом, готовая база и пакеты — в релизе (Releases), не в коде
+content/
+publish/
+
+# установщик: исходники (CSharpCoach.iss, build.ps1) в репозитории, результаты и комплект — нет
+installer/app/
+installer/Output/
+installer/redist/
+
+# мусор рабочей папки
+%T%/
+x5.png
+person.xml
+user.json

@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>CSharpCoach</AssemblyName>
+    <RootNamespace>CsharpLearning.App</RootNamespace>
+    <Version>1.0.0</Version>
+    <Product>CSharpCoach</Product>
+    <Company>BlueBox Production</Company>
+    <ApplicationIcon></ApplicationIcon>
+    <SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CsharpLearning.Core\CsharpLearning.Core.csproj" />
+    <ProjectReference Include="..\CsharpLearning.GraphEditor\CsharpLearning.GraphEditor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- офлайн-дистрибутив курса кладём рядом с программой: приложение читает его без сети -->
+    <None Include="..\..\content\course.db" Link="content\course.db" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!--
+    Примеры в приложении компилируются Roslyn'ом против reference-сборок .NET. Они лежат в
+    «packs» установленного SDK, а у ученика SDK может не быть (только рантайм) — поэтому
+    кладём их рядом с программой: refs\core и refs\desktop. IlWorkbench ищет их в первую очередь.
+  -->
+  <Target Name="BundleExampleRefs" AfterTargets="Build;Publish" DependsOnTargets="ResolveFrameworkReferences">
+    <ItemGroup>
+      <_PackCore Include="@(ResolvedTargetingPack)" Condition="'%(ResolvedTargetingPack.NuGetPackageId)' == 'Microsoft.NETCore.App.Ref'" />
+      <_PackDesktop Include="@(ResolvedTargetingPack)" Condition="'%(ResolvedTargetingPack.NuGetPackageId)' == 'Microsoft.WindowsDesktop.App.Ref'" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_CorePackPath>%(_PackCore.Path)</_CorePackPath>
+      <_DesktopPackPath>%(_PackDesktop.Path)</_DesktopPackPath>
+      <_RefOut>$(OutDir)refs\</_RefOut>
+    </PropertyGroup>
+    <ItemGroup>
+      <_CoreRefFile Include="$(_CorePackPath)\ref\net*\*.dll" />
+      <_DesktopRefFile Include="$(_DesktopPackPath)\ref\net*\*.dll" />
+    </ItemGroup>
+    <Message Importance="high" Text="refs: core=$(_CorePackPath) desktop=$(_DesktopPackPath) files=@(_CoreRefFile->Count())+@(_DesktopRefFile->Count())" />
+    <Copy SourceFiles="@(_CoreRefFile)" DestinationFolder="$(_RefOut)core" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_DesktopRefFile)" DestinationFolder="$(_RefOut)desktop" SkipUnchangedFiles="true" />
+    <!-- при публикации (для установщика) те же сборки кладём в папку публикации -->
+    <Copy Condition="'$(_IsPublishing)' == 'true'" SourceFiles="@(_CoreRefFile)" DestinationFolder="$(PublishDir)refs\core" SkipUnchangedFiles="true" />
+    <Copy Condition="'$(_IsPublishing)' == 'true'" SourceFiles="@(_DesktopRefFile)" DestinationFolder="$(PublishDir)refs\desktop" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

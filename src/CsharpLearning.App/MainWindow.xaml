@@ -1,0 +1,622 @@
+<Window x:Class="CsharpLearning.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:view="clr-namespace:CsharpLearning.App.View"
+        xmlns:data="clr-namespace:System.Windows.Data;assembly=PresentationFramework"
+        Title="CSharpCoach — офлайн-тренажёр C#"
+        Width="1380" Height="860"
+        MinWidth="900" MinHeight="600"
+        Background="{StaticResource Bg}"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <view:BoolToVisibilityConverter x:Key="BoolVis"/>
+        <view:InverseBoolToVisibilityConverter x:Key="InvBoolVis"/>
+        <view:BoolToStringConverter x:Key="CorrectMark" WhenTrue="Верно" WhenFalse="Неверно"/>
+        <view:HealthToBrushConverter x:Key="HealthBrush"/>
+        <view:CodeHighlightConverter x:Key="Highlight"/>
+        <view:InverseBoolConverter x:Key="BoolToInverseConverter"/>
+        <view:CorrectToBrushConverter x:Key="HealthForAnswer"/>
+
+        <!-- шаблоны блоков урока -->
+        <DataTemplate x:Key="HeadingBlockTemplate">
+            <StackPanel Margin="0,16,0,6">
+                <Border Height="3" Width="46" HorizontalAlignment="Left" Background="{StaticResource Accent}" CornerRadius="2"/>
+                <TextBlock Text="{Binding Text}" Style="{StaticResource H2}" Margin="0,7,0,0"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ParagraphBlockTemplate">
+            <TextBlock Style="{StaticResource Body}" Margin="0,7,0,0" view:RichText.Block="{Binding}"/>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ListBlockTemplate">
+            <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0"
+                       Foreground="{StaticResource TextMuted}" view:RichText.Block="{Binding}"/>
+        </DataTemplate>
+
+        <DataTemplate x:Key="CodeBlockTemplate">
+            <Border Style="{StaticResource CodeCard}" Margin="0,10,0,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <TextBlock Style="{StaticResource CodeBlock}" view:CodeView.Code="{Binding Code}"/>
+                </ScrollViewer>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="TableBlockTemplate">
+            <Border Style="{StaticResource CodeCard}" Margin="0,10,0,0">
+                <TextBlock Text="{Binding Text}" Style="{StaticResource CodeText}" Foreground="{StaticResource TextMuted}"/>
+            </Border>
+        </DataTemplate>
+
+        <view:BlockTemplateSelector x:Key="BlockSelector"
+                                    Heading="{StaticResource HeadingBlockTemplate}"
+                                    Paragraph="{StaticResource ParagraphBlockTemplate}"
+                                    Code="{StaticResource CodeBlockTemplate}"
+                                    List="{StaticResource ListBlockTemplate}"
+                                    Table="{StaticResource TableBlockTemplate}"/>
+
+        <!-- оглавление: список уроков по главам -->
+        <CollectionViewSource x:Key="LessonView" Source="{Binding LessonCards}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Group"/>
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+
+        <Style x:Key="LessonItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="7" Padding="10,7">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="{StaticResource CardSoftBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="{StaticResource AccentSoft}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="LessonCardTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="18"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding Mark}" FontSize="12" VerticalAlignment="Top"
+                           Foreground="{StaticResource Good}" Margin="0,2,0,0"/>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="{Binding ShortTitle}" TextWrapping="Wrap" FontSize="13.2"/>
+                    <TextBlock Text="{Binding MetaText}" Style="{StaticResource Muted}" FontSize="11.5" Margin="0,2,0,0"/>
+                </StackPanel>
+                <Border Grid.Column="2" Style="{StaticResource Chip}" VerticalAlignment="Top" Padding="7,2"
+                        Visibility="{Binding HasQuestions, Converter={StaticResource BoolVis}}">
+                    <TextBlock Text="{Binding QuestionCount}" FontSize="11" Foreground="{StaticResource Accent}"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!-- карточка пояснения -->
+        <DataTemplate x:Key="ExplanationTemplate">
+            <Border Style="{StaticResource ExplanationCard}" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource H3}" Foreground="{StaticResource Accent}"/>
+                    <TextBlock Text="{Binding Body}" Style="{StaticResource Body}" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="TrapTemplate">
+            <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource Bad}" BorderThickness="1"
+                    CornerRadius="9" Padding="14,10" Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource H3}" Foreground="{StaticResource Bad}"/>
+                    <TextBlock Text="{Binding Body}" Style="{StaticResource Body}" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="TagTemplate">
+            <Border Style="{StaticResource Chip}">
+                <TextBlock Text="{Binding}" FontSize="11.5" Foreground="{StaticResource TextMuted}"/>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="OptionTemplate">
+            <Button Style="{StaticResource FlatButton}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                    Margin="0,4,0,0" Content="{Binding}"
+                    Command="{Binding DataContext.SelectOptionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    CommandParameter="{Binding}"/>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ConceptStatTemplate">
+            <Border Style="{StaticResource CardSoft}" Margin="0,0,0,8" Padding="14,10">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="10" Height="10" Margin="0,0,9,0" VerticalAlignment="Center"
+                                 Fill="{Binding Health, Converter={StaticResource HealthBrush}}"/>
+                        <TextBlock Text="{Binding Concept}" Style="{StaticResource H3}"/>
+                        <TextBlock Style="{StaticResource Muted}" Margin="10,0,0,0"
+                                   Text="{Binding ReadMinutes, StringFormat={}{0:F1} мин}"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Verdict}" Style="{StaticResource Body}" FontSize="13"
+                               Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="AnswerLogTemplate">
+            <Border Style="{StaticResource CardSoft}" Margin="0,0,0,6" Padding="12,8">
+                <StackPanel>
+                    <TextBlock Text="{Binding QuestionText}" Style="{StaticResource Body}" FontSize="13" MaxHeight="46"/>
+                    <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,0" Text="{Binding Given, StringFormat={}твой ответ: {0}}"/>
+                    <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,0" Text="{Binding Correct, StringFormat={}эталон: {0}}"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <Style x:Key="StatChip" TargetType="TextBlock" BasedOn="{StaticResource Muted}">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,0,18,0"/>
+        </Style>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="Right" Command="{Binding NextLessonCommand}"/>
+        <KeyBinding Key="Left" Command="{Binding PrevLessonCommand}"/>
+        <KeyBinding Key="Enter" Command="{Binding SubmitAnswerCommand}"/>
+        <KeyBinding Key="F5" Command="{Binding RunExampleCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding CloseOverlayCommand}"/>
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ================= верхняя панель ================= -->
+        <Border Grid.Row="0" Background="{StaticResource BgSoft}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+            <Grid Margin="18,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="CSharpCoach" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource Text}"/>
+                    <TextBlock Text="{Binding StatusLine}" Style="{StaticResource Muted}" Margin="0,3,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="ToggleLeftBtn" Style="{StaticResource FlatButton}" Content="◧ Оглавление" Margin="0,0,8,0"
+                            Click="OnToggleLeft" ToolTip="Свернуть или показать оглавление"/>
+                    <Button x:Name="ToggleRightBtn" Style="{StaticResource FlatButton}" Content="Пример ◨" Margin="0,0,16,0"
+                            Click="OnToggleRight" ToolTip="Свернуть или показать панель примера"/>
+                    <Button Style="{StaticResource PrimaryButton}" Content="Граф-режим" Margin="0,0,16,0"
+                            Click="OnOpenGraph" ToolTip="Визуальное программирование на C#: ноды, классы, исходный код"/>
+                    <Button Style="{StaticResource FlatButton}" Content="Аналитика" Margin="0,0,8,0"
+                            Command="{Binding ShowDashboardCommand}"/>
+                    <Button Style="{StaticResource FlatButton}" Content="Расширенный режим" Margin="0,0,8,0"
+                            Command="{Binding ToggleAdvancedCommand}"/>
+                    <Button Style="{StaticResource FlatButton}" Content="Проверить обновление"
+                            Click="OnCheckUpdates" ToolTip="Новая версия программы и новые уроки; прогресс сохраняется"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================= центр ================= -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftCol" Width="330" MinWidth="200"/>
+                <ColumnDefinition x:Name="LeftSplitCol" Width="5"/>
+                <ColumnDefinition Width="*" MinWidth="360"/>
+                <ColumnDefinition x:Name="RightSplitCol" Width="5"/>
+                <ColumnDefinition x:Name="RightCol" Width="470" MinWidth="320"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- оглавление -->
+            <Border x:Name="LeftPanel" Grid.Column="0" Background="{StaticResource BgSoft}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBox Grid.Row="0" Style="{StaticResource SearchBox}" Margin="0,0,0,10"
+                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Поиск по названию урока и тегу"/>
+
+                    <ListView Grid.Row="1" x:Name="LessonList" BorderThickness="0" Background="Transparent"
+                              ItemsSource="{Binding Source={StaticResource LessonView}}"
+                              ItemContainerStyle="{StaticResource LessonItemStyle}"
+                              ItemTemplate="{StaticResource LessonCardTemplate}"
+                              SelectedItem="{Binding SelectedCard, Mode=TwoWay}"
+                              SelectionChanged="OnLessonSelected"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.CanContentScroll="True">
+                        <ListView.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource CardBrush}" CornerRadius="7" Padding="10,6" Margin="0,12,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Name.Title}" FontWeight="SemiBold" FontSize="13.5" Foreground="{StaticResource Accent}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Name.Progress}" Style="{StaticResource Muted}" FontSize="11.5"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListView.GroupStyle>
+                    </ListView>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" x:Name="LeftSplit" Width="5" HorizontalAlignment="Stretch"
+                          Background="Transparent" ResizeBehavior="PreviousAndNext" Cursor="SizeWE"
+                          ToolTip="Потяни, чтобы изменить ширину оглавления"/>
+            <GridSplitter Grid.Column="3" x:Name="RightSplit" Width="5" HorizontalAlignment="Stretch"
+                          Background="Transparent" ResizeBehavior="PreviousAndNext" Cursor="SizeWE"
+                          ToolTip="Потяни, чтобы изменить ширину панели примера"/>
+
+            <!-- урок -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Padding="22,18,22,12" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+                    <StackPanel>
+                        <TextBlock Visibility="{Binding HasLesson, Converter={StaticResource BoolVis}}"
+                                   Style="{StaticResource Muted}" FontSize="12.5"
+                                   Text="{Binding CurrentLesson.ChapterTitle}"/>
+                        <TextBlock Visibility="{Binding HasLesson, Converter={StaticResource BoolVis}}"
+                                   Text="{Binding CurrentLesson.Title}" Style="{StaticResource H1}" Margin="0,4,0,0"/>
+
+                        <WrapPanel Margin="0,12,0,0">
+                            <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding CurrentLesson.EstimatedMinutes, StringFormat={}{0} мин чтения}" FontSize="11.5" Foreground="{StaticResource TextMuted}"/></Border>
+                            <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding CurrentLesson.CodeCount, StringFormat={}примеров: {0}}" FontSize="11.5" Foreground="{StaticResource TextMuted}"/></Border>
+                            <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding CurrentLesson.QuestionCount, StringFormat={}вопросов: {0}}" FontSize="11.5" Foreground="{StaticResource TextMuted}"/></Border>
+                            <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding CurrentLesson.ReadTimeText, StringFormat={}прочитано: {0}}" FontSize="11.5" Foreground="{StaticResource Accent}"/></Border>
+                            </WrapPanel>
+                        <ItemsControl ItemsSource="{Binding CurrentLesson.Model.Tags}" ItemTemplate="{StaticResource TagTemplate}">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        </ItemsControl>
+
+                        <StackPanel x:Name="ModeTabs" Orientation="Horizontal" Margin="0,14,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Style="{StaticResource FlatButton}" Content="← предыдущий" Margin="0,0,8,0"
+                                    Command="{Binding PrevLessonCommand}"/>
+                            <Button Style="{StaticResource PrimaryButton}" Content="следующий урок →"
+                                    Command="{Binding NextLessonCommand}"/>
+                            <TextBlock Style="{StaticResource Muted}" Margin="14,0,0,0" VerticalAlignment="Center"
+                                       Text="{Binding CurrentLesson.AnsweredCount, StringFormat={}отвечено: {0}}"/>
+                            <TextBlock Style="{StaticResource Muted}" Margin="10,0,0,0" VerticalAlignment="Center"
+                                       Text="{Binding CurrentLesson.CorrectCount, StringFormat={}верно: {0}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Grid.Row="1" Text="Выбери урок слева — здесь появится теория, пояснения и примеры."
+                           Style="{StaticResource Body}" Foreground="{StaticResource TextMuted}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Visibility="{Binding NoLesson, Converter={StaticResource BoolVis}}"/>
+
+                <ScrollViewer Grid.Row="1" x:Name="LessonScroll" VerticalScrollBarVisibility="Auto" Padding="22,18,22,26"
+                              Visibility="{Binding HasLesson, Converter={StaticResource BoolVis}}">
+                    <StackPanel>
+                        <Border Style="{StaticResource CardSoft}" Padding="12,8" Margin="0,0,0,6"
+                                Visibility="{Binding CurrentLesson.HasGlossary, Converter={StaticResource BoolVis}}">
+                            <TextBlock Style="{StaticResource Muted}" FontSize="12.5"
+                                       Text="💡 Слова, подчёркнутые пунктиром, — наведи на них мышь: объясню на примере из жизни."/>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding CurrentLesson.TextBlocks}"
+                                      ItemTemplateSelector="{StaticResource BlockSelector}"/>
+
+                        <TextBlock Text="Частые ошибки" Style="{StaticResource H2}" Margin="0,18,0,8"
+                                   Visibility="{Binding CurrentLesson.HasTraps, Converter={StaticResource BoolVis}}"/>
+                        <ItemsControl ItemsSource="{Binding CurrentLesson.TrapBlocks}" ItemTemplate="{StaticResource TrapTemplate}"/>
+
+                        <Expander Margin="0,18,0,0" Header="Все пояснения и аналогии к уроку" Foreground="{StaticResource TextMuted}"
+                                  Visibility="{Binding CurrentLesson.HasAnalogy, Converter={StaticResource BoolVis}}">
+                            <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding CurrentLesson.AnalogyBlocks}"
+                                          ItemTemplate="{StaticResource ExplanationTemplate}"/>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- вкладки урока: оконные примеры и графы -->
+                <view:WindowExamplesView x:Name="WindowTab" Grid.Row="1" Visibility="Collapsed" Background="{StaticResource Bg}"/>
+                <view:GraphIllustrationView x:Name="GraphTab" Grid.Row="1" Visibility="Collapsed" Background="{StaticResource Bg}"/>
+
+                <!-- оверлей: аналитика -->
+                <Border Grid.Row="1" Background="{StaticResource Bg}" Visibility="{Binding ShowDashboard, Converter={StaticResource BoolVis}}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="22,18">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Твоя аналитика" Style="{StaticResource H1}"/>
+                                <Button Style="{StaticResource FlatButton}" Content="закрыть" Margin="18,8,0,0"
+                                        Command="{Binding CloseOverlayCommand}"/>
+                            </StackPanel>
+
+                            <WrapPanel Margin="0,14,0,0">
+                                <TextBlock Style="{StaticResource StatChip}" Text="{Binding OverallProgressText}"/>
+                                <TextBlock Style="{StaticResource StatChip}" Text="{Binding TotalMinutesText}"/>
+                                <TextBlock Style="{StaticResource StatChip}" Text="{Binding AccuracyText}"/>
+                            </WrapPanel>
+
+                            <ProgressBar Margin="0,12,0,20" Value="{Binding Summary.OverallProgressPercent, Mode=OneWay}"/>
+
+                            <TextBlock Text="Где проседаешь" Style="{StaticResource H2}" Margin="0,6,0,10"/>
+                            <ItemsControl ItemsSource="{Binding WeakConcepts}" ItemTemplate="{StaticResource ConceptStatTemplate}"/>
+
+                            <TextBlock Text="Уже усвоено" Style="{StaticResource H2}" Margin="0,18,0,10"/>
+                            <ItemsControl ItemsSource="{Binding GoodConcepts}" ItemTemplate="{StaticResource ConceptStatTemplate}"/>
+
+                            <TextBlock Text="Последние ответы" Style="{StaticResource H2}" Margin="0,18,0,10"/>
+                            <ItemsControl ItemsSource="{Binding RecentAnswers}" ItemTemplate="{StaticResource AnswerLogTemplate}"/>
+
+                            <Button Style="{StaticResource FlatButton}" Content="сбросить весь прогресс" Margin="0,16,0,0"
+                                    HorizontalAlignment="Left" Command="{Binding ResetProgressCommand}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!-- правая колонка: пример/вопрос + запуск -->
+            <Border x:Name="RightPanel" Grid.Column="4" Background="{StaticResource BgSoft}" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- оверлей расширенного режима -->
+                    <Border Grid.Row="0" Background="{StaticResource BgSoft}" Panel.ZIndex="2"
+                            Visibility="{Binding ShowAdvanced, Converter={StaticResource BoolVis}}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16,14">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Что происходит под капотом" Style="{StaticResource H2}"/>
+                                    <Button Style="{StaticResource FlatButton}" Content="закрыть" Margin="14,2,0,0"
+                                            Command="{Binding CloseOverlayCommand}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Advanced.Status}" Style="{StaticResource Muted}" Margin="0,8,0,0"/>
+
+                                <TextBlock Text="{Binding Advanced.Errors}" Foreground="{StaticResource Bad}"
+                                           Style="{StaticResource Body}" FontSize="12.5" Margin="0,8,0,0"
+                                           Visibility="{Binding Advanced.HasErrors, Converter={StaticResource BoolVis}}"/>
+
+                                <TextBlock Text="{Binding Advanced.SourceTitle}" Style="{StaticResource H3}" Margin="0,14,0,6"/>
+                                <Border Style="{StaticResource CodeCard}">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="240">
+                                        <TextBlock Style="{StaticResource CodeBlock}" view:CodeView.Code="{Binding Advanced.Source}"/>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <TextBlock Text="{Binding Advanced.Output}" Style="{StaticResource CodeText}"
+                                           Foreground="{StaticResource Good}" Margin="0,10,0,0"/>
+
+                                <TextBlock Text="{Binding Advanced.ILTitle}" Style="{StaticResource H3}" Margin="0,14,0,6"
+                                           Visibility="{Binding Advanced.HasAnalysis, Converter={StaticResource BoolVis}}"/>
+                                <DataGrid x:Name="IlGrid" Style="{StaticResource DarkGrid}" ItemsSource="{Binding Advanced.Instructions}" MaxHeight="280"
+                                          Visibility="{Binding Advanced.HasAnalysis, Converter={StaticResource BoolVis}}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Op}" Header="адрес"/>
+                                        <DataGridTextColumn Binding="{Binding OpCode}" Header="CIL"/>
+                                        <DataGridTextColumn Binding="{Binding Operand}" Header="операнд" Width="*" ElementStyle="{StaticResource GridCellWrap}"/>
+                                        <DataGridTextColumn Binding="{Binding PlainLanguage}" Header="человеческим языком" Width="1.4*" ElementStyle="{StaticResource GridCellWrap}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock Text="{Binding Advanced.MemoryTitle}" Style="{StaticResource H3}" Margin="0,14,0,6"
+                                           Visibility="{Binding Advanced.HasAnalysis, Converter={StaticResource BoolVis}}"/>
+                                <DataGrid Style="{StaticResource DarkGrid}" ItemsSource="{Binding Advanced.Memory}" MaxHeight="240"
+                                          Visibility="{Binding Advanced.HasAnalysis, Converter={StaticResource BoolVis}}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Name}" Header="имя"/>
+                                        <DataGridTextColumn Binding="{Binding Section}" Header="где лежит" Width="1.3*" ElementStyle="{StaticResource GridCellWrap}"/>
+                                        <DataGridTextColumn Binding="{Binding Type}" Header="тип"/>
+                                        <DataGridTextColumn Binding="{Binding Size}" Header="размер"/>
+                                        <DataGridTextColumn Binding="{Binding Value}" Header="значение" ElementStyle="{StaticResource GridCellWrap}"/>
+                                        <DataGridTextColumn Binding="{Binding Why}" Header="почему" Width="1.6*" ElementStyle="{StaticResource GridCellWrap}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock Text="{Binding Advanced.TotalBytesText}" Style="{StaticResource Muted}" Margin="0,8,0,0"/>
+
+                                <TextBlock Text="{Binding Advanced.TypeTitle}" Style="{StaticResource H3}" Margin="0,16,0,6"
+                                           Visibility="{Binding Advanced.HasTypeRows, Converter={StaticResource BoolVis}}"/>
+                                <DataGrid Style="{StaticResource DarkGrid}" ItemsSource="{Binding Advanced.TypeRows}" MaxHeight="300"
+                                          Visibility="{Binding Advanced.HasTypeRows, Converter={StaticResource BoolVis}}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Type}" Header="тип"/>
+                                        <DataGridTextColumn Binding="{Binding Size}" Header="размер" Width="1.2*" ElementStyle="{StaticResource GridCellWrap}"/>
+                                        <DataGridTextColumn Binding="{Binding Range}" Header="диапазон" Width="1.2*" ElementStyle="{StaticResource GridCellWrap}"/>
+                                        <DataGridTextColumn Binding="{Binding Purpose}" Header="для чего" Width="1.6*" ElementStyle="{StaticResource GridCellWrap}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <TextBlock Text="{Binding Advanced.MemoryExplanation}" Style="{StaticResource Body}" FontSize="13"
+                                           Foreground="{StaticResource TextMuted}" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding Advanced.Notes}" Style="{StaticResource CodeText}" FontSize="12"
+                                           Foreground="{StaticResource TextMuted}" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- вопрос-пример -->
+                    <Grid Grid.Row="0" Visibility="{Binding ShowQuestionPanel, Converter={StaticResource BoolVis}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Margin="16,14,16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Пример по этому уроку" Style="{StaticResource H2}"/>
+                                <Border Style="{StaticResource Chip}" Margin="12,2,0,0"
+                                        Visibility="{Binding CurrentQuestion.IsGui, Converter={StaticResource BoolVis}}">
+                                    <TextBlock Text="{Binding CurrentQuestion.GuiFlavor}" FontSize="11" Foreground="{StaticResource Accent}"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="{Binding CurrentQuestion.Concept}" Style="{StaticResource Muted}" Margin="0,3,0,0"/>
+                            <TextBlock Text="{Binding CurrentQuestion.Prompt}" Style="{StaticResource Body}" Margin="0,8,0,0"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button Style="{StaticResource FlatButton}" Content="предыдущий пример" Padding="9,5"
+                                        Command="{Binding PrevQuestionCommand}"/>
+                                <TextBlock Text="{Binding CurrentLesson.QuestionPosition}" Style="{StaticResource Muted}"
+                                           VerticalAlignment="Center" Margin="10,0"/>
+                                <Button Style="{StaticResource FlatButton}" Content="следующий пример" Padding="9,5"
+                                        Command="{Binding NextQuestionCommand}"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,12">
+                            <StackPanel>
+                                <Border Style="{StaticResource CodeCard}"
+                                        Visibility="{Binding CurrentQuestion.HasCode, Converter={StaticResource BoolVis}}">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                                        <TextBlock Style="{StaticResource CodeBlock}" view:CodeView.Code="{Binding CurrentQuestion.Code}"/>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <TextBlock Text="Выбери один вариант:" Style="{StaticResource H3}" Margin="0,14,0,0"
+                                           Visibility="{Binding CurrentQuestion.IsChoice, Converter={StaticResource BoolVis}}"/>
+                                <ItemsControl ItemsSource="{Binding CurrentQuestion.Options}"
+                                              ItemTemplate="{StaticResource OptionTemplate}"
+                                              Visibility="{Binding CurrentQuestion.IsChoice, Converter={StaticResource BoolVis}}"/>
+
+                                <TextBlock Text="Напиши, что выведет программа (по строкам, как в консоли):" Style="{StaticResource H3}"
+                                           Margin="0,14,0,0"
+                                           Visibility="{Binding CurrentQuestion.IsChoice, Converter={StaticResource InvBoolVis}}"/>
+                                <Grid Margin="0,8,0,0"
+                                      Visibility="{Binding CurrentQuestion.IsChoice, Converter={StaticResource InvBoolVis}}">
+                                    <Border Background="{StaticResource CodeBg}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4"/>
+                                    <!-- подсвеченная копия текста лежит под прозрачным TextBox: видно цвета, работает ввод -->
+                                    <TextBlock x:Name="AnswerView" Style="{StaticResource CodeInput}" Margin="11,9,11,9"
+                                               IsHitTestVisible="False" TextWrapping="Wrap"
+                                               view:CodeView.Code="{Binding Text, ElementName=AnswerBox}"/>
+                                    <TextBox x:Name="AnswerBox" Style="{StaticResource TextBoxInput}" MinHeight="76"
+                                             Background="Transparent" BorderBrush="Transparent" Foreground="Transparent"
+                                             SelectionBrush="{StaticResource Accent}" SelectionOpacity="0.35"
+                                             AcceptsReturn="True" TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Disabled"
+                                             Text="{Binding CurrentQuestion.Given, UpdateSourceTrigger=PropertyChanged}"
+                                             IsEnabled="{Binding CurrentQuestion.Answered, Converter={StaticResource BoolToInverseConverter}}"
+                                             TextChanged="OnAnswerTextChanged" PreviewKeyDown="OnAnswerKeyDown"
+                                             LostKeyboardFocus="OnAnswerLostFocus"/>
+                                    <Popup x:Name="SuggestPopup" PlacementTarget="{Binding ElementName=AnswerBox}" Placement="Relative"
+                                           StaysOpen="True" AllowsTransparency="True" Focusable="False">
+                                        <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource Accent}" BorderThickness="1"
+                                                CornerRadius="6" Padding="3" MinWidth="200" MaxWidth="440" Margin="0,0,8,8">
+                                            <StackPanel>
+                                                <ListBox x:Name="SuggestList" Focusable="False" Background="Transparent" BorderThickness="0"
+                                                         PreviewMouseLeftButtonUp="OnSuggestClick" MaxHeight="190">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel Orientation="Horizontal" Margin="4,2">
+                                                                <TextBlock Text="{Binding Text}" FontFamily="{StaticResource CodeFont}" FontSize="12.5"
+                                                                           TextWrapping="NoWrap" MinWidth="120"/>
+                                                                <TextBlock Text="{Binding Hint}" Style="{StaticResource Muted}" FontSize="11" Margin="14,1,0,0"
+                                                                           TextWrapping="NoWrap"/>
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                                <TextBlock Text="Tab / Enter — вставить · Esc — закрыть · Ctrl+Пробел — все" Style="{StaticResource Muted}"
+                                                           FontSize="11" Margin="6,3,6,2"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Popup>
+                                </Grid>
+
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Style="{StaticResource PrimaryButton}" Content="Проверить ответ" Margin="0,0,8,8"
+                                            Command="{Binding SubmitAnswerCommand}"/>
+                                    <Button Style="{StaticResource FlatButton}" Content="Переиграть" Margin="0,0,8,8"
+                                            Command="{Binding ResetAnswerCommand}"/>
+                                    <Button Style="{StaticResource FlatButton}" Content="IL и память" Margin="0,0,8,8"
+                                            Command="{Binding ShowIlCommand}"/>
+                                </WrapPanel>
+
+                                <Border Style="{StaticResource Card}" Margin="0,14,0,0"
+                                        Visibility="{Binding CurrentQuestion.ShowFeedback, Converter={StaticResource BoolVis}}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding CurrentQuestion.IsCorrect, Converter={StaticResource CorrectMark}}"
+                                                   Style="{StaticResource H3}"
+                                                   Foreground="{Binding CurrentQuestion.IsCorrect, Converter={StaticResource HealthForAnswer}}"/>
+                                        <TextBlock Style="{StaticResource Muted}" Margin="0,6,0,0"
+                                                   Text="{Binding CurrentQuestion.CorrectAnswerText, StringFormat={}эталон: {0}}"/>
+                                        <TextBlock Text="{Binding CurrentQuestion.ExplanationText}" Style="{StaticResource Body}" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- запуск примера -->
+                    <Border Grid.Row="1" Background="{StaticResource BgSoft}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="16,12" Panel.ZIndex="3">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource PrimaryButton}" Content="▶ Запустить пример"
+                                        Command="{Binding RunExampleCommand}"/>
+                                <Button Style="{StaticResource FlatButton}" Content="очистить вывод" Margin="8,0,0,0"
+                                        Command="{Binding ClearRunCommand}"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding RunTitle}" Style="{StaticResource Muted}" FontSize="11.5" Margin="0,7,0,0"/>
+                            <TextBlock Text="{Binding RunStatus}" Style="{StaticResource Muted}" Margin="0,4,0,0"/>
+                            <TextBlock Text="{Binding RunErrors}" Foreground="{StaticResource Bad}" Style="{StaticResource CodeText}"
+                                       TextWrapping="Wrap" MaxHeight="70" FontSize="12" Margin="0,6,0,0"
+                                       Visibility="{Binding HasRunResult, Converter={StaticResource BoolVis}}"/>
+                            <Border Style="{StaticResource CodeCard}" Margin="0,8,0,0"
+                                    Visibility="{Binding HasRunResult, Converter={StaticResource BoolVis}}">
+                                <ScrollViewer MaxHeight="150" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock Text="{Binding RunOutput}" Style="{StaticResource CodeText}" Foreground="{StaticResource Good}"/>
+                                </ScrollViewer>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ================= нижняя панель ================= -->
+        <Border Grid.Row="2" Background="{StaticResource BgSoft}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+            <Grid Margin="18,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding UpdateStatus}" Style="{StaticResource Muted}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,14,0"
+                           Text="→ следующий урок: стрелка вправо · запустить пример: F5"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CsharpLearning.App/CsharpLearning.App.csproj" />
+    <Project Path="src/CsharpLearning.ContentBuilder/CsharpLearning.ContentBuilder.csproj" />
+    <Project Path="src/CsharpLearning.Core/CsharpLearning.Core.csproj" />
+    <Project Path="src/CsharpLearning.GraphEditor/CsharpLearning.GraphEditor.csproj" />
+  </Folder>
+</Solution>
