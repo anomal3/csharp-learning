@@ -11,6 +11,13 @@
 4. Залить на хостинг `https://blueboxproduction.ru/csharp/`: `manifest.json`, `CSharpCoach-Setup-<версия>.exe`, `course-vN.db.gz`.
    `manifest.json` должен быть без BOM (скрипт так и пишет; программа BOM тоже переживает).
 
+## Два курса: C# и Rust
+- У каждого языка своя база уроков и свой прогресс: `course.db` / `progress.db` (C#) и `course-rust.db` / `progress-rust.db` (Rust). Выбор языка — кнопки «C#» и «Rust» в шапке; открытый курс запоминается в `settings.json` (`Language`).
+- Сборка курса Rust: `dotnet run --project src\CsharpLearning.ContentBuilder -- --lang=rust [--fresh] [--offline]` (кэш страниц — `content\raw-rust`, база — `content\course-rust.db`, пакет — `publish\course-rust-vN.db.gz`, манифест — `publish\manifest-rust.json`).
+- Эталоны ответов в вопросах Rust получены реальным запуском `rustc` (каждый пример запускается дважды: нестабильный вывод отбрасывается).
+- На хостинг для Rust кладутся `manifest-rust.json` и `course-rust-vN.db.gz` рядом с остальными файлами. Блок `"app"` (версия программы) остаётся только в `manifest.json`.
+- Запуск Rust-примеров в приложении: локальный `rustc` (PATH или `%USERPROFILE%\.cargo\bin`), а без него — play.rust-lang.org (нужен интернет). У курса Rust нет расширенного режима (IL), редактора графов и оконных примеров.
+
 ## Что делает установщик
 - Ставит для текущего пользователя в `%LOCALAPPDATA%\Programs\CSharpCoach` — права администратора не нужны, поэтому автообновление идёт без запроса UAC.
 - Если на ПК нет .NET 10 Desktop Runtime (нужен и программе, и `dotnet exec` для запуска примеров), ставит его из комплекта; запрос администратора — только для этого шага.

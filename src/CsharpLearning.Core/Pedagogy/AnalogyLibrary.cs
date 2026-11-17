@@ -186,13 +186,17 @@ public static class ExplanationEngine
 {
     static readonly Regex[] HeadingRe = { new(@"<h([2-4])[^>]*>(.*?)</h\1>", RegexOptions.IgnoreCase | RegexOptions.Singleline) };
 
-    public static List<AnalogyLibrary.Analogy> Match(string lessonTitle, string bodyText)
+    public static List<AnalogyLibrary.Analogy> Match(string lessonTitle, string bodyText) =>
+        Match(AnalogyLibrary.All, lessonTitle, bodyText);
+
+    /// <summary>То же для любого курса: библиотека аналогий передаётся явно (C# — AnalogyLibrary.All, Rust — RustAnalogyLibrary.All).</summary>
+    public static List<AnalogyLibrary.Analogy> Match(IReadOnlyList<AnalogyLibrary.Analogy> library, string lessonTitle, string bodyText)
     {
         var haystack = (lessonTitle + "\n" + bodyText).ToLowerInvariant();
         var picked = new List<AnalogyLibrary.Analogy>();
         var seen = new HashSet<string>();
 
-        foreach (var a in AnalogyLibrary.All)
+        foreach (var a in library)
         {
             int score = 0;
             foreach (var kw in a.Keywords)

@@ -410,6 +410,13 @@ public static class FormExamples
 
     public static FormExample ById(string id) => All.First(e => e.Id == id);
 
+    /// <summary>Есть ли у урока «настоящие» оконные примеры (совпадение по тегам, без запасных).</summary>
+    public static bool HasMatch(IEnumerable<string> lessonTags)
+    {
+        var tags = lessonTags.ToHashSet();
+        return All.Any(e => e.Tags.Any(t => t != "общее" && tags.Contains(t)));
+    }
+
     /// <summary>Какие оконные примеры подходят уроку: по тегам урока; если ничего — два самых простых.</summary>
     public static List<FormExample> ForTags(IEnumerable<string> lessonTags)
     {

@@ -6,6 +6,9 @@ public partial class App : Application
 {
     public static LearningState State { get; private set; } = null!;
 
+    /// <summary>Переключает приложение на курс другого языка: прежнее состояние закрывается, открывается новое.</summary>
+    public static void SwitchCourse(CsharpLearning.Core.Pedagogy.CourseProfile profile) => State = State.SwitchTo(profile);
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);

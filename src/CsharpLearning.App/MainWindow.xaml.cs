@@ -18,44 +18,81 @@ public partial class MainWindow : Window
 
     async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        var state = App.State;
+        AttachCourse(App.State, applyServiceArgs: true);
+
+        // Офлайн-режим не зависит от сети: проверку обновления делаем в фоне, учёбе не мешаем.
+        await _vm!.CheckUpdateIfDueAsync();
+        if (_vm.AutoUpdateEnabled) await OfferAppUpdateAsync(manual: false);
+    }
+
+    /// <summary>Подключает окно к курсу (C# или Rust): новая модель, вкладки, кнопки; первый непрочитанный урок открывается сам.</summary>
+    void AttachCourse(LearningState state, bool applyServiceArgs = false)
+    {
+        if (_vm is not null) { _vm.PropertyChanged -= OnVmPropertyChanged; _vm.Dispose(); }
+
         _vm = new MainViewModel(state);
         DataContext = _vm;
 
+        _mode = "console";
+        WindowTab.Visibility = Visibility.Collapsed;
+        GraphTab.Visibility = Visibility.Collapsed;
+        Title = $"CSharpCoach — офлайн-тренажёр {state.Profile.Language}";
+        UpdateLanguageButtons();
         BuildModeTabs();
 
-        _vm.PropertyChanged += (_, args) =>
-        {
-            // новый урок: обновить вкладки «Окно» и «Граф», если они сейчас открыты
-            if (args.PropertyName == nameof(MainViewModel.CurrentLesson)) RefreshModeContent();
-
-            // новый урок всегда открывается с самого верха, а не там, где закончили читать прошлый
-            if (args.PropertyName == nameof(MainViewModel.CurrentLesson))
-                Dispatcher.BeginInvoke(() => LessonScroll.ScrollToVerticalOffset(0), System.Windows.Threading.DispatcherPriority.Loaded);
-
-            // расширенный режим показывается в правой панели — раскрываем её, если она свёрнута
-            if (args.PropertyName == nameof(MainViewModel.ShowAdvanced) && _vm.ShowAdvanced && !_rightOpen)
-                OnToggleRight(this, new RoutedEventArgs());
-        };
+        _vm.PropertyChanged += OnVmPropertyChanged;
 
         // Первый урок открывается сам: приложение сразу готово к чтению.
         _vm.OpenNextLesson();
 
         // служебные ключи для проверки: --tag=N (первый урок с N-м тегом словаря), --mode=window|graph
+        if (!applyServiceArgs) return;
         foreach (var a in Environment.GetCommandLineArgs())
         {
-            if (a.StartsWith("--tag=") && int.TryParse(a[6..], out var ti) && ti >= 0 && ti < CsharpLearning.Core.Pedagogy.TagMapper.All.Count)
+            var tags = _vm.Profile.AllTags;
+            if (a.StartsWith("--tag=") && int.TryParse(a[6..], out var ti) && ti >= 0 && ti < tags.Count)
             {
-                var tag = CsharpLearning.Core.Pedagogy.TagMapper.All[ti];
+                var tag = tags[ti];
                 var card = _vm.LessonCards.FirstOrDefault(c => c.Tags.Contains(tag));
                 if (card is not null) _vm.OpenLesson(card);
             }
             else if (a.StartsWith("--mode=")) SetMode(a[7..]);
         }
+    }
 
-        // Офлайн-режим не зависит от сети: проверку обновления делаем в фоне, учёбе не мешаем.
-        await _vm.CheckUpdateIfDueAsync();
-        if (_vm.AutoUpdateEnabled) await OfferAppUpdateAsync(manual: false);
+    void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
+    {
+        // новый урок: обновить вкладки «Окно» и «Граф», если они сейчас открыты
+        if (args.PropertyName == nameof(MainViewModel.CurrentLesson)) OnLessonChangedForModes();
+
+        // новый урок всегда открывается с самого верха, а не там, где закончили читать прошлый
+        if (args.PropertyName == nameof(MainViewModel.CurrentLesson))
+            Dispatcher.BeginInvoke(() => LessonScroll.ScrollToVerticalOffset(0), System.Windows.Threading.DispatcherPriority.Loaded);
+
+        // расширенный режим показывается в правой панели — раскрываем её, если она свёрнута
+        if (args.PropertyName == nameof(MainViewModel.ShowAdvanced) && _vm is { ShowAdvanced: true } && !_rightOpen)
+            OnToggleRight(this, new RoutedEventArgs());
+    }
+
+    /// <summary>Кнопки «C#» и «Rust»: у каждого языка свои уроки и свой прогресс.</summary>
+    void OnSwitchLang(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string id } || _vm is null) return;
+        var target = CsharpLearning.Core.Pedagogy.CourseProfile.ById(id);
+        if (_vm.Profile.Id == target.Id) return;
+
+        _vm.PropertyChanged -= OnVmPropertyChanged;
+        _vm.Dispose();
+        _vm = null;
+        App.SwitchCourse(target);
+        AttachCourse(App.State);
+    }
+
+    void UpdateLanguageButtons()
+    {
+        bool rust = _vm?.Profile.Id == "rust";
+        LangCsBtn.Style = (Style)FindResource(rust ? "FlatButton" : "PrimaryButton");
+        LangRustBtn.Style = (Style)FindResource(rust ? "PrimaryButton" : "FlatButton");
     }
 
     /// <summary>Ищет новую версию программы; при согласии скачивает установщик, запускает его и закрывает приложение.</summary>
@@ -95,9 +132,40 @@ public partial class MainWindow : Window
     // ---------- вкладки урока: Консоль | Окно | Граф ----------
     string _mode = "console";
 
+    /// <summary>Есть ли у текущего урока примеры для режима (консоль — всегда).</summary>
+    bool IsModeAvailable(string key)
+    {
+        if (key == "console") return true;
+        if (_vm is { HasDotNetTools: false }) return false;       // у Rust только консоль
+        var tags = _vm?.CurrentLesson?.Model?.Tags;
+        if (tags is null) return false;
+        return key switch
+        {
+            "window" => CsharpLearning.Core.Forms.FormExamples.HasMatch(tags),
+            "graph" => View.GraphIllustrationView.HasSamples(tags),
+            _ => true,
+        };
+    }
+
+    /// <summary>Новый урок: если для открытой вкладки нет примеров — уходим на консоль; пересчитываем доступность вкладок.</summary>
+    void OnLessonChangedForModes()
+    {
+        if (!IsModeAvailable(_mode))
+        {
+            _mode = "console";
+            WindowTab.Visibility = Visibility.Collapsed;
+            GraphTab.Visibility = Visibility.Collapsed;
+        }
+        BuildModeTabs();
+        RefreshModeContent();
+    }
+
     void BuildModeTabs()
     {
         ModeTabs.Children.Clear();
+        // у курса Rust одна «консольная» вкладка — полоса вкладок не нужна
+        ModeTabs.Visibility = _vm is { HasDotNetTools: false } ? Visibility.Collapsed : Visibility.Visible;
+        if (_vm is { HasDotNetTools: false }) return;
         foreach (var (key, title, tip) in new[]
         {
             ("console", "Консольное приложение", "Примеры в чёрной консоли: текст урока и вопросы справа"),
@@ -106,17 +174,23 @@ public partial class MainWindow : Window
         })
         {
             bool on = key == _mode;
-            var label = new TextBlock { Text = title, FontSize = 13.5, FontWeight = FontWeights.SemiBold, Foreground = (System.Windows.Media.Brush)FindResource(on ? "Text" : "TextMuted") };
+            bool available = IsModeAvailable(key);
+            var grey = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x6B, 0x72, 0x80));
+            var red = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xD9, 0x4B, 0x4B));
+            var label = new TextBlock { Text = title, FontSize = 13.5, FontWeight = FontWeights.SemiBold, Foreground = available ? (System.Windows.Media.Brush)FindResource(on ? "Text" : "TextMuted") : grey };
             var tab = new Border
             {
-                Child = label, Padding = new Thickness(16, 8, 16, 8), Margin = new Thickness(0, 0, 6, 0), Cursor = System.Windows.Input.Cursors.Hand, ToolTip = tip,
+                Child = label, Padding = new Thickness(16, 8, 16, 8), Margin = new Thickness(0, 0, 6, 0),
+                Cursor = available ? System.Windows.Input.Cursors.Hand : System.Windows.Input.Cursors.No,
+                ToolTip = available ? tip : "Для этого урока нет примеров — используйте вкладку «Консольное приложение»",
                 CornerRadius = new CornerRadius(8, 8, 0, 0),
-                Background = (System.Windows.Media.Brush)FindResource(on ? "CardBrush" : "BgSoft"),
-                BorderBrush = (System.Windows.Media.Brush)FindResource(on ? "Accent" : "Line"),
-                BorderThickness = new Thickness(0, on ? 3 : 0, 0, 0),
+                Background = (System.Windows.Media.Brush)FindResource(on && available ? "CardBrush" : "BgSoft"),
+                BorderBrush = available ? (System.Windows.Media.Brush)FindResource(on ? "Accent" : "Line") : red,
+                BorderThickness = available ? new Thickness(0, on ? 3 : 0, 0, 0) : new Thickness(1),
+                Opacity = available ? 1 : 0.8,
             };
             string k = key;
-            tab.MouseLeftButtonUp += (s, e) => SetMode(k);
+            if (available) tab.MouseLeftButtonUp += (s, e) => SetMode(k);
             ModeTabs.Children.Add(tab);
         }
     }
@@ -124,6 +198,7 @@ public partial class MainWindow : Window
     void SetMode(string mode)
     {
         if (_mode == mode) return;
+        if (!IsModeAvailable(mode)) return;
         _mode = mode;
         BuildModeTabs();
         WindowTab.Visibility = mode == "window" ? Visibility.Visible : Visibility.Collapsed;

@@ -202,15 +202,22 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- выбор языка курса: C# или Rust; у каждого свои уроки и свой прогресс -->
+                    <Button x:Name="LangCsBtn" Style="{StaticResource FlatButton}" Content="C#" Margin="0,0,2,0" Click="OnSwitchLang" Tag="csharp"
+                            ToolTip="Курс C#"/>
+                    <Button x:Name="LangRustBtn" Style="{StaticResource FlatButton}" Content="Rust" Margin="0,0,16,0" Click="OnSwitchLang" Tag="rust"
+                            ToolTip="Курс Rust"/>
                     <Button x:Name="ToggleLeftBtn" Style="{StaticResource FlatButton}" Content="◧ Оглавление" Margin="0,0,8,0"
                             Click="OnToggleLeft" ToolTip="Свернуть или показать оглавление"/>
                     <Button x:Name="ToggleRightBtn" Style="{StaticResource FlatButton}" Content="Пример ◨" Margin="0,0,16,0"
                             Click="OnToggleRight" ToolTip="Свернуть или показать панель примера"/>
                     <Button Style="{StaticResource PrimaryButton}" Content="Граф-режим" Margin="0,0,16,0"
+                            Visibility="{Binding HasDotNetTools, Converter={StaticResource BoolVis}}"
                             Click="OnOpenGraph" ToolTip="Визуальное программирование на C#: ноды, классы, исходный код"/>
                     <Button Style="{StaticResource FlatButton}" Content="Аналитика" Margin="0,0,8,0"
                             Command="{Binding ShowDashboardCommand}"/>
                     <Button Style="{StaticResource FlatButton}" Content="Расширенный режим" Margin="0,0,8,0"
+                            Visibility="{Binding HasDotNetTools, Converter={StaticResource BoolVis}}"
                             Command="{Binding ToggleAdvancedCommand}"/>
                     <Button Style="{StaticResource FlatButton}" Content="Проверить обновление"
                             Click="OnCheckUpdates" ToolTip="Новая версия программы и новые уроки; прогресс сохраняется"/>
@@ -562,6 +569,7 @@
                                     <Button Style="{StaticResource FlatButton}" Content="Переиграть" Margin="0,0,8,8"
                                             Command="{Binding ResetAnswerCommand}"/>
                                     <Button Style="{StaticResource FlatButton}" Content="IL и память" Margin="0,0,8,8"
+                                            Visibility="{Binding DataContext.HasDotNetTools, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}"
                                             Command="{Binding ShowIlCommand}"/>
                                 </WrapPanel>
 

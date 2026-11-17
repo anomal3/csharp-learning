@@ -222,6 +222,7 @@ public sealed class MainViewModel : NotifyBase, IDisposable
             if (Set(ref _lesson, value))
             {
                 Raise(nameof(HasLesson));
+                Raise(nameof(NoLesson));
                 Raise(nameof(CurrentQuestion));
                 Raise(nameof(CanSubmitAnswer));
                 Raise(nameof(ShowQuestionPanel));
@@ -325,9 +326,17 @@ public sealed class MainViewModel : NotifyBase, IDisposable
     string _runStatus = "";
     public string RunStatus { get => _runStatus; private set => Set(ref _runStatus, value); }
 
+    /// <summary>Открытый курс (C# или Rust).</summary>
+    public CsharpLearning.Core.Pedagogy.CourseProfile Profile => _state.Profile;
+
+    /// <summary>Расширенный режим, редактор графов и оконные примеры есть только у курса C#.</summary>
+    public bool HasDotNetTools => _state.Profile.HasDotNetTools;
+
     public string RunTitle => CurrentQuestion?.IsGui == true
         ? $"Запуск {CurrentQuestion.GuiFlavor}-примера: окно появится на экране и закроется само"
-        : "Запуск примера в отдельном процессе (песочница убьёт бесконечный цикл через 8 с)";
+        : _state.Profile.Id == "rust"
+            ? "Запуск примера: компилятор rustc (на этом ПК, а без него — play.rust-lang.org); бесконечный цикл остановится через 8 с"
+            : "Запуск примера в отдельном процессе (песочница убьёт бесконечный цикл через 8 с)";
 
     public async Task RunCurrentExampleAsync()
     {
@@ -344,6 +353,24 @@ public sealed class MainViewModel : NotifyBase, IDisposable
 
         try
         {
+            // Rust: rustc на этом ПК, а если его нет — play.rust-lang.org
+            if (_state.Profile.Id == "rust")
+            {
+                var rr = await RustRunner.RunAsync(q.Code, Paths.RunWork, TimeSpan.FromSeconds(8));
+                if (!rr.Compiled)
+                {
+                    RunErrors = rr.Stderr;
+                    RunStatus = "Компилятор Rust отверг пример: " + FirstLine(rr.Stderr);
+                    return;
+                }
+                RunOutput = string.IsNullOrWhiteSpace(rr.Stdout) ? "(программа ничего не вывела)" : rr.Stdout.Trim();
+                if (!string.IsNullOrWhiteSpace(rr.Stderr)) RunErrors = rr.Stderr.Trim();
+                RunStatus = rr.TimedOut
+                    ? "Программа не завершилась за 8 с — запуск остановлен."
+                    : $"Выполнено за {rr.Ms} мс · код возврата {rr.ExitCode} · {(rr.Ok ? "успешно" : "с ошибкой")} · {(rr.Via == "rustc" ? "rustc на этом ПК" : "play.rust-lang.org")}";
+                return;
+            }
+
             var compiled = await Task.Run(() => IlWorkbench.Compile(q.Code, workDir, "lesson_demo"));
 
             if (!compiled.Success)
@@ -464,12 +491,17 @@ public sealed class MainViewModel : NotifyBase, IDisposable
         IsUpdating = true;
         UpdateStatus = install ? "Скачиваю обновлённый курс…" : "Проверяю версию курса на хостинге…";
 
-        CurrentLesson?.Dispose();
-        CurrentLesson = null;
+        // Урок закрываем только перед заменой базы; простая проверка версии не должна сбрасывать открытый урок
+        // (иначе при первом запуске, когда проверка идёт сразу, экран остаётся пустым).
+        if (install)
+        {
+            CurrentLesson?.Dispose();
+            CurrentLesson = null;
+        }
 
         try
         {
-            var known = Math.Max(_state.ContentVersion, _state.Settings.KnownContentVersion);
+            var known = Math.Max(_state.ContentVersion, _state.Settings.KnownVersionOf(_state.Profile));
 
             // Устанавливаем только с закрытой базой: SQLite держит course.db открытым,
             // и File.Replace над открытым файлом не проходит.
@@ -481,7 +513,7 @@ public sealed class MainViewModel : NotifyBase, IDisposable
 
             if (result.Updated)
             {
-                _state.Settings.KnownContentVersion = result.Info?.ContentVersion ?? known;
+                _state.Settings.SetKnownVersion(_state.Profile, result.Info?.ContentVersion ?? known);
                 _state.OpenCourse();
                 CurrentLesson?.Dispose();
                 CurrentLesson = null;
@@ -491,7 +523,7 @@ public sealed class MainViewModel : NotifyBase, IDisposable
             }
             else if (result.Info is not null)
             {
-                _state.Settings.KnownContentVersion = Math.Max(_state.Settings.KnownContentVersion, result.Info.ContentVersion);
+                _state.Settings.SetKnownVersion(_state.Profile, Math.Max(_state.Settings.KnownVersionOf(_state.Profile), result.Info.ContentVersion));
             }
 
             _state.SaveSettings();
@@ -512,7 +544,7 @@ public sealed class MainViewModel : NotifyBase, IDisposable
     /// <summary>Кнопка «Проверить обновление»: если на хостинге курс новее — сразу ставим; прогресс не трогается.</summary>
     public async Task<string> CheckAndUpdateContentAsync()
     {
-        var known = Math.Max(_state.ContentVersion, _state.Settings.KnownContentVersion);
+        var known = Math.Max(_state.ContentVersion, _state.Settings.KnownVersionOf(_state.Profile));
         var probe = await UpdateService.CheckAndInstallAsync(known, install: false);
         if (probe.Ok && probe.Info is not null && probe.Info.IsNewerThan(known))
             await CheckUpdateAsync(install: true);

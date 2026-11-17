@@ -43,7 +43,7 @@ Name: "desktopicon"; Description: "Создать ярлык на рабочем
 
 [Files]
 ; программа, библиотеки, reference-сборки для запуска примеров (refs\) и чистая база курса (content\course.db)
-Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "*.pdb,progress.db,progress.db-*,settings.json,course.db.prev,*.csgraph"
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "*.pdb,progress.db,progress.db-*,progress-rust.db,progress-rust.db-*,settings.json,course.db.prev,course-rust.db.prev,*.csgraph"
 ; среда выполнения .NET 10 Desktop Runtime — распаковывается только если её нет на ПК
 Source: "redist\windowsdesktop-runtime-win-x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: NeedsRuntime
 

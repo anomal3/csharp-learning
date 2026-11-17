@@ -29,8 +29,12 @@ namespace CsharpLearning.ContentBuilder;
 /// Контент и прогресс — РАЗНЫЕ базы (course.db / progress.db), поэтому обновление уроков
 /// никогда не затирает статистику прочитанного и ответов.
 /// </summary>
-internal static class Program
+internal static partial class Program
 {
+    /// <summary>Какой курс собираем: C# (по умолчанию) или Rust (--lang=rust).</summary>
+    static CourseProfile Profile = CourseProfile.CSharp;
+    static bool IsRust => Profile.Id == "rust";
+
     static HttpClient Http = CreateClient();
     static bool Trace;
     static bool Offline;
@@ -111,6 +115,10 @@ internal static class Program
         var sealArg = args.FirstOrDefault(a => a.StartsWith("--seal="));
         if (sealArg is not null) return Seal(sealArg["--seal=".Length..]);
 
+        var langArg = args.FirstOrDefault(a => a.StartsWith("--lang="));
+        if (langArg is not null) Profile = CourseProfile.ById(langArg["--lang=".Length..]);
+        MetanitParser.BaseUrl = Profile.BaseUrl;
+
         string root = args.FirstOrDefault(a => !a.StartsWith("--")) ?? FindProjectRoot();
         string dataDir = Path.Combine(root, "content");
         string outDir = Path.Combine(root, "publish");
@@ -123,8 +131,8 @@ internal static class Program
         bool checkMode = args.Contains("--check");
         bool retitle = args.Contains("--retitle");
 
-        string dbPath = Path.Combine(dataDir, "course.db");
-        string cacheDir = Path.Combine(dataDir, "raw");
+        string dbPath = Path.Combine(dataDir, Profile.DbFile);
+        string cacheDir = Path.Combine(dataDir, Profile.CacheDir);
         Directory.CreateDirectory(cacheDir);
 
         // --offline берём всё из content/raw. --refresh-cache — то же самое, но страницы,
@@ -140,7 +148,7 @@ internal static class Program
 
         var sw = Stopwatch.StartNew();
         Console.WriteLine("=== Сбор учебного контента (офлайн-база для приложения) ===");
-        Console.WriteLine($"база: {dbPath}   режим: {(Offline ? "OFFLINE (кэш content/raw)" : checkMode ? "только проверка эталонов" : retitle ? "починка названий" : "сеть + кэш")}");
+        Console.WriteLine($"курс: {Profile.Language}   база: {dbPath}   режим: {(Offline ? "OFFLINE (кэш content/" + Profile.CacheDir + ")" : checkMode ? "только проверка эталонов" : retitle ? "починка названий" : "сеть + кэш")}");
 
         using var db = new ContentDb(dbPath);
 
@@ -183,22 +191,22 @@ internal static class Program
         var tocBySlug = toc.SelectMany(t => t.lessons).GroupBy(l => l.Slug).ToDictionary(g => g.Key, g => g.First());
         var syllabus = new List<(Curriculum.Stage stage, string slug)>();
         var planned = new HashSet<string>();
-        foreach (var st in Curriculum.Stages)
+        foreach (var st in Profile.Stages)
             foreach (var slug in st.Slugs)
             {
                 if (!planned.Add(slug)) { Console.WriteLine($"  ! урок {slug} в плане дважды"); continue; }
-                if (Curriculum.IsAuthored(slug) || tocBySlug.ContainsKey(slug)) syllabus.Add((st, slug));
+                if (Profile.IsAuthored(slug) || tocBySlug.ContainsKey(slug)) syllabus.Add((st, slug));
                 else Console.WriteLine($"  ! урок {slug} есть в плане, но нет в оглавлении");
             }
         var unplanned = tocBySlug.Keys.Where(sl => !planned.Contains(sl)).ToList();
-        foreach (var sl in unplanned) syllabus.Add((Curriculum.ExtraStage, sl));
+        foreach (var sl in unplanned) syllabus.Add((Profile.ExtraStage, sl));
         if (unplanned.Count > 0) Console.WriteLine($"  ! уроков вне плана (в «Дополнительные»): {unplanned.Count}: {string.Join(", ", unplanned)}");
 
         var orderOf = new Dictionary<string, int>();
         foreach (var (_, slug) in syllabus) orderOf[slug] = orderOf.Count + 1;
 
         foreach (var st in syllabus.Select(x => x.stage).Distinct())
-            db.UpsertChapter(new Chapter { Id = st.Number, Number = st.Number, Title = st.FullTitle, Course = "tutorial" });
+            db.UpsertChapter(new Chapter { Id = st.Number, Number = st.Number, Title = st.FullTitle, Course = Profile.CourseKey });
 
         var workDir = Path.Combine(dataDir, "build");
         if (Directory.Exists(workDir)) Directory.Delete(workDir, true);
@@ -211,12 +219,12 @@ internal static class Program
         var queue = new List<(int chapterId, MetanitParser.TocLesson lesson)>();
         foreach (var (stage, slug) in syllabus)
         {
-            var title = Curriculum.IsAuthored(slug) ? AuthoredLessons.All.First(a => a.Slug == slug).Title : tocBySlug[slug].Title;
+            var title = Profile.IsAuthored(slug) ? Profile.Authored.First(a => a.Slug == slug).Title : tocBySlug[slug].Title;
             queue.Add((stage.Number, new MetanitParser.TocLesson(slug, title)));
         }
-        int tocQueueCount = queue.Count(q => !Curriculum.IsAuthored(q.lesson.Slug));
+        int tocQueueCount = queue.Count(q => !Profile.IsAuthored(q.lesson.Slug));
         if (queue.Count > limit) queue = queue.Take(limit).ToList();
-        Console.WriteLine($"к обработке: {queue.Count} уроков ({AuthoredLessons.All.Count} авторских)");
+        Console.WriteLine($"к обработке: {queue.Count} уроков ({Profile.Authored.Count} авторских)");
 
         int done = 0, skipped = 0, failed = 0, rejected = 0;
         const int Batch = 6;
@@ -224,7 +232,7 @@ internal static class Program
         for (int b = 0; b < queue.Count; b += Batch)
         {
             var batch = queue.GetRange(b, Math.Min(Batch, queue.Count - b));
-            var pages = await Task.WhenAll(batch.Select(x => Curriculum.IsAuthored(x.lesson.Slug)
+            var pages = await Task.WhenAll(batch.Select(x => Profile.IsAuthored(x.lesson.Slug)
                 ? Task.FromResult<string?>("")
                 : DownloadLesson(x.lesson.Slug, cacheDir)));
 
@@ -241,9 +249,9 @@ internal static class Program
                 string url = MetanitParser.BaseUrl + tocLesson.Slug;
                 LessonParseResult parsed;
                 string hash;
-                if (Curriculum.IsAuthored(tocLesson.Slug))
+                if (Profile.IsAuthored(tocLesson.Slug))
                 {
-                    var au = AuthoredLessons.All.First(a => a.Slug == tocLesson.Slug);
+                    var au = Profile.Authored.First(a => a.Slug == tocLesson.Slug);
                     var plain = string.Join("\n", au.Blocks.Where(x => x.Kind != BlockKind.Code).Select(x => x.Text));
                     parsed = new LessonParseResult(au.Title, "", au.Blocks, plain, au.Blocks.Count(x => x.Kind == BlockKind.Code), null);
                     url = "";
@@ -274,11 +282,11 @@ internal static class Program
                     ReadMinutes = Math.Max(1, (int)Math.Round(Words(parsed.PlainText) / 200.0)),
                     SourceHash = hash,
                     Blocks = parsed.Blocks,
-                    Tags = TagMapper.Of(title, parsed.PlainText),
+                    Tags = Profile.TagsOf(title, parsed.PlainText),
                 };
 
                 // Пояснения «не сухая теория»: аналогии с животными/бытом + перевод в код + ловушки
-                var analogies = ExplanationEngine.Match(title, parsed.PlainText);
+                var analogies = ExplanationEngine.Match(Profile.Analogies, title, parsed.PlainText);
                 foreach (var a in analogies)
                 {
                     lesson.Explanations.Add(new Explanation { Title = a.Concept + " — на примере", Kind = ExplanationKind.Analogy, Body = a.AnimalPicture });
@@ -321,6 +329,13 @@ internal static class Program
 
                 foreach (var concept in concepts.Take(3))
                 {
+                    if (IsRust)
+                    {
+                        foreach (var ge in RustExampleGenerator.For(concept).Take(2))
+                            candidates.Add((ge, concept, false));
+                        continue;
+                    }
+
                     foreach (var ge in ExampleGenerator.For(concept).Take(2))
                         candidates.Add((ge, concept, false));
 
@@ -406,11 +421,11 @@ internal static class Program
         db.SetMeta("source", MetanitParser.BaseUrl);
         var chapters = db.LoadChapters();
         db.SetMeta("chapters", chapters.Count.ToString());
-        db.SetMeta("tags_json", JsonSerializer.Serialize(TagMapper.All));
+        db.SetMeta("tags_json", JsonSerializer.Serialize(Profile.AllTags));
         db.Dispose();
 
-        var packPath = Path.Combine(outDir, "course-v" + version + ".db.gz");
-        GzipFile(Path.Combine(Path.GetDirectoryName(db.FilePath)!, "course.db"), packPath);
+        var packPath = Path.Combine(outDir, Profile.PackPrefix + "v" + version + ".db.gz");
+        GzipFile(Path.Combine(Path.GetDirectoryName(db.FilePath)!, Profile.DbFile), packPath);
 
         // ВАЖНО: внутри инициализатора словаря нельзя писать ["ключ"] = new[] { … } —
         // компилятор не может разобрать, к чему относятся фигурные скобки. Поэтому массивы
@@ -431,14 +446,16 @@ internal static class Program
             ["lessons"] = lessons,
             ["questions"] = questions,
             ["files"] = new List<Dictionary<string, object>> { fileEntry },
-            ["nextCourses"] = new List<string>
-            {
-                "https://metanit.com/sharp/dotnet/",
-                "https://metanit.com/sharp/windowsforms/",
-                "https://metanit.com/sharp/wpf/",
-            },
+            ["nextCourses"] = IsRust
+                ? new List<string>()
+                : new List<string>
+                {
+                    "https://metanit.com/sharp/dotnet/",
+                    "https://metanit.com/sharp/windowsforms/",
+                    "https://metanit.com/sharp/wpf/",
+                },
         };
-        File.WriteAllText(Path.Combine(outDir, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(outDir, Profile.ManifestFile), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
 
         Console.WriteLine();
         Console.WriteLine($"=== Готово за {sw.Elapsed.TotalSeconds:F1} с ===");
@@ -446,7 +463,7 @@ internal static class Program
         Console.WriteLine($"вопросов: {questions}");
         Console.WriteLine($"версия контента: {version}");
         Console.WriteLine($"пакет: {packPath} ({new FileInfo(packPath).Length / 1024} КБ)");
-        Console.WriteLine($"манифест: {Path.Combine(outDir, "manifest.json")}");
+        Console.WriteLine($"манифест: {Path.Combine(outDir, Profile.ManifestFile)}");
         Console.WriteLine("→ эти два файла кладутся в папку /csharp/ на blueboxproduction.ru");
         return 0;
     }
@@ -477,7 +494,7 @@ internal static class Program
 
             // GUI-пример: консольный каркас даёт эталон, но само окно ученик увидит живьём —
             // поэтому дополнительно проверяем, что оконный код хотя бы компилируется.
-            if (ge.IsGui && ge.HarnessCode is not null)
+            if (!IsRust && ge.IsGui && ge.HarnessCode is not null)
             {
                 string guiKey = "gui:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(ge.Code)));
                 bool guiOk;
@@ -511,7 +528,7 @@ internal static class Program
                 lock (_cache)
                     if (_cache.TryGetValue(key, out var already)) { VerifiedCount++; return already; }
 
-                var verified = await VerifyExample(ge, _workDir, "cache");
+                var verified = IsRust ? await VerifyRustExample(ge, _workDir, "cache") : await VerifyExample(ge, _workDir, "cache");
                 lock (_cache) _cache[key] = verified;
                 if (verified is not null) VerifiedCount++;
                 return verified;
@@ -580,7 +597,7 @@ internal static class Program
                 var lesson = db.LoadLesson(lref.Id);
                 if (lesson is null) continue;
 
-                string htmlPath = Path.Combine(Path.GetDirectoryName(db.FilePath)!, "raw", lref.Slug + ".html");
+                string htmlPath = Path.Combine(Path.GetDirectoryName(db.FilePath)!, Profile.CacheDir, lref.Slug + ".html");
                 string fromPage = File.Exists(htmlPath) ? MetanitParser.TitleFromHead(File.ReadAllText(htmlPath)) : "";
                 string title = PickTitle(tocTitle, fromPage, lref.Slug);
 
@@ -599,7 +616,7 @@ internal static class Program
                     ReadMinutes = lesson.ReadMinutes,
                     SourceHash = lesson.SourceHash,
                     Blocks = lesson.Blocks,
-                    Tags = lesson.Tags.Count > 0 ? lesson.Tags : TagMapper.Of(title, string.Join(" ", lesson.Blocks.Where(b => b.Kind != BlockKind.Code).Select(b => b.Text))),
+                    Tags = lesson.Tags.Count > 0 ? lesson.Tags : Profile.TagsOf(title, string.Join(" ", lesson.Blocks.Where(b => b.Kind != BlockKind.Code).Select(b => b.Text))),
                     Explanations = lesson.Explanations,
                     Questions = lesson.Questions,
                 };
@@ -643,7 +660,7 @@ internal static class Program
         {
             if (block.Kind != BlockKind.Code || block.Code is null) continue;
             var code = block.Code.Trim();
-            if (!LooksRunnable(code)) continue;
+            if (!(IsRust ? LooksRunnableRust(code) : LooksRunnable(code))) continue;
             if (code.Length > 1800) continue;
 
             yield return (new GeneratedExample
@@ -770,6 +787,8 @@ internal static class Program
     /// </summary>
     static async Task<int> CheckExamplesAsync(ContentDb db)
     {
+        if (IsRust) return await CheckRustExamplesAsync(db);
+
         var workDir = Path.Combine(Path.GetDirectoryName(db.FilePath)!, "check");
         if (Directory.Exists(workDir)) Directory.Delete(workDir, true);
         Directory.CreateDirectory(workDir);

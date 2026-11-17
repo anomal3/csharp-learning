@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>CSharpCoach</AssemblyName>
     <RootNamespace>CsharpLearning.App</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>CSharpCoach</Product>
     <Company>BlueBox Production</Company>
     <ApplicationIcon></ApplicationIcon>
@@ -23,6 +23,7 @@
   <ItemGroup>
     <!-- офлайн-дистрибутив курса кладём рядом с программой: приложение читает его без сети -->
     <None Include="..\..\content\course.db" Link="content\course.db" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\content\course-rust.db" Link="content\course-rust.db" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\content\course-rust.db')" />
   </ItemGroup>
 
   <!--

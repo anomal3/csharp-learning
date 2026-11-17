@@ -32,7 +32,7 @@ public sealed class GraphIllustrationView : ScrollViewer
     }
 
     /// <summary>Какие примеры графов подходят уроку по его тегам.</summary>
-    static List<int> SamplesFor(IEnumerable<string> tags)
+    static List<int> MatchingSamples(IEnumerable<string> tags)
     {
         var t = tags.ToHashSet();
         var list = new List<int>();
@@ -42,7 +42,17 @@ public sealed class GraphIllustrationView : ScrollViewer
         if (t.Contains("методы и return")) Add(4);
         if (t.Contains("циклы") || t.Contains("массивы и индексы") || t.Contains("коллекции")) Add(2);
         if (t.Contains("условия") || t.Contains("операторы") || t.Contains("типы данных") || t.Contains("переменные")) Add(1);
-        if (list.Count == 0 || t.Contains("старт и тулчейн") || t.Contains("программа и Main")) Add(0);
+        if (t.Contains("старт и тулчейн") || t.Contains("программа и Main")) Add(0);
+        return list;
+    }
+
+    /// <summary>Есть ли у урока подходящие графы (без запасного примера).</summary>
+    public static bool HasSamples(IEnumerable<string> tags) => MatchingSamples(tags).Count > 0;
+
+    static List<int> SamplesFor(IEnumerable<string> tags)
+    {
+        var list = MatchingSamples(tags);
+        if (list.Count == 0) list.Add(0);
         return list.Take(3).ToList();
     }
 

@@ -231,7 +231,7 @@ public static class CodeView
         if (code.Length == 0) return;
 
         int pos = 0;
-        foreach (var span in CsharpLearning.Core.Runner.CodeClassifier.Classify(code))
+        foreach (var span in CsharpLearning.App.Services.Paths.Profile.Classify(code))
         {
             if (span.Start < pos || span.Start + span.Length > code.Length) continue;
             if (span.Start > pos) Append(tb, code.Substring(pos, span.Start - pos), Palette[CsharpLearning.Core.Runner.CodeKind.Plain]);

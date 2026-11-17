@@ -2,6 +2,7 @@ using System.IO;
 using CsharpLearning.App.Services;
 using CsharpLearning.Core.Analytics;
 using CsharpLearning.Core.Model;
+using CsharpLearning.Core.Pedagogy;
 using CsharpLearning.Core.Storage;
 
 namespace CsharpLearning.App;
@@ -26,17 +27,39 @@ public sealed class LearningState : IDisposable
 
     public IReadOnlyList<Chapter> Chapters => _chapters ??= (_course?.LoadChapters() ?? new List<Chapter>());
     public Dictionary<int, string> Statuses => _statuses;
-    public LearnerSummary Summary => _summary ??= AnalyticsEngine.Build(Progress, Chapters);
+    public LearnerSummary Summary => _summary ??= AnalyticsEngine.Build(Progress, Chapters, Profile.Analogies);
 
     public int ContentVersion => _course is not null && int.TryParse(_course.GetMeta("content_version"), out var v) ? v : 0;
     public string? BuiltAt => _course?.GetMeta("built_at");
 
-    public static LearningState Create(string[] args)
+    public CourseProfile Profile { get; private set; } = CourseProfile.CSharp;
+
+    /// <summary>Какой курс открыть при старте: --lang=rust в аргументах, иначе тот, что был открыт в прошлый раз.</summary>
+    public static LearningState Create(string[] args, CourseProfile? profile = null)
     {
         Paths.Init(args);
-        EnsureCourse();
         var settings = AppSettings.Load(Paths.SettingsFile);
-        return new LearningState(settings);
+
+        var langArg = args.FirstOrDefault(a => a.StartsWith("--lang="));
+        profile ??= CourseProfile.ById(langArg is not null ? langArg["--lang=".Length..] : settings.Language);
+
+        Paths.Profile = profile;
+        EnsureCourse();
+        settings.Language = profile.Id;
+        return new LearningState(settings) { Profile = profile };
+    }
+
+    /// <summary>Переключение курса: прежнее состояние закрывается, настройки (общие) сохраняются и переходят в новое.</summary>
+    public LearningState SwitchTo(CourseProfile profile)
+    {
+        SaveSettings();
+        var settings = Settings;
+        settings.Language = profile.Id;
+        Dispose();
+
+        Paths.Profile = profile;
+        EnsureCourse();
+        return new LearningState(settings) { Profile = profile };
     }
 
     /// <summary>Первый запуск: копируем офлайн-дистрибутив курса из папки программы в локальные данные.</summary>
@@ -48,8 +71,8 @@ public sealed class LearningState : IDisposable
         string[] candidates =
         {
             Paths.BundledCourseDb,
-            Path.Combine(Paths.AppBase, "course.db"),
-            Path.Combine(Paths.AppBase, "..", "..", "..", "content", "course.db"),
+            Path.Combine(Paths.AppBase, Paths.Profile.DbFile),
+            Path.Combine(Paths.AppBase, "..", "..", "..", "content", Paths.Profile.DbFile),
         };
 
         foreach (var src in candidates)

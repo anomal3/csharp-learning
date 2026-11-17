@@ -16,9 +16,13 @@ if (-not $iscc) { throw 'Inno Setup 6 not found (winget install JRSoftware.InnoS
 if (-not (Test-Path "$PSScriptRoot\redist\windowsdesktop-runtime-win-x64.exe")) { throw 'installer\redist\windowsdesktop-runtime-win-x64.exe is missing (https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe)' }
 
 # 1. чистая база курса: один файл, без WAL, без таблиц прогресса
-Write-Host '-- sealing content\course.db'
-dotnet run --project src\CsharpLearning.ContentBuilder -c Release -- "--seal=$root\content\course.db"
-if ($LASTEXITCODE -ne 0) { throw 'course.db check failed' }
+$dbs = @('course.db', 'course-rust.db')      # курсы C# и Rust; обе базы должны быть чистыми
+foreach ($db in $dbs) {
+    if (-not (Test-Path "$root\content\$db")) { throw "content\$db not found (build the course first: ContentBuilder [--lang=rust])" }
+    Write-Host "-- sealing content\$db"
+    dotnet run --project src\CsharpLearning.ContentBuilder -c Release -- "--seal=$root\content\$db"
+    if ($LASTEXITCODE -ne 0) { throw "$db check failed" }
+}
 
 # 2. публикация программы (нужен .NET 10 Desktop Runtime у пользователя; ставится установщиком)
 $app = Join-Path $PSScriptRoot 'app'
@@ -28,14 +32,16 @@ dotnet publish src\CsharpLearning.App -c Release -r win-x64 --self-contained fal
 if ($LASTEXITCODE -ne 0) { throw 'publish failed' }
 
 # 3. в комплекте не должно быть чужого прогресса, настроек и журналов
-foreach ($bad in 'progress.db', 'progress.db-wal', 'progress.db-shm', 'settings.json', 'course.db.prev') {
+foreach ($bad in 'progress.db', 'progress.db-wal', 'progress.db-shm', 'progress-rust.db', 'progress-rust.db-wal', 'progress-rust.db-shm', 'settings.json', 'course.db.prev', 'course-rust.db.prev') {
     Get-ChildItem $app -Recurse -Filter $bad -ErrorAction SilentlyContinue | Remove-Item -Force
 }
-$shipped = Join-Path $app 'content\course.db'
-if (-not (Test-Path $shipped)) { throw 'content\course.db is missing from publish output' }
-dotnet run --project src\CsharpLearning.ContentBuilder -c Release -- "--seal=$shipped"
-if ($LASTEXITCODE -ne 0) { throw 'shipped course.db check failed' }
-foreach ($side in '-wal', '-shm', '-journal') { if (Test-Path "$shipped$side") { throw "stray file $shipped$side" } }
+foreach ($db in $dbs) {
+    $shipped = Join-Path $app "content\$db"
+    if (-not (Test-Path $shipped)) { throw "content\$db is missing from publish output" }
+    dotnet run --project src\CsharpLearning.ContentBuilder -c Release -- "--seal=$shipped"
+    if ($LASTEXITCODE -ne 0) { throw "shipped $db check failed" }
+    foreach ($side in '-wal', '-shm', '-journal') { if (Test-Path "$shipped$side") { throw "stray file $shipped$side" } }
+}
 if (-not (Test-Path (Join-Path $app 'refs\core')) -or -not (Test-Path (Join-Path $app 'refs\desktop'))) { throw 'refs\ missing: examples will not compile without SDK' }
 
 # 4. установщик
@@ -60,4 +66,5 @@ if ($m.PSObject.Properties.Name -contains 'app') { $m.app = $node } else { $m | 
 Write-Host ''
 Write-Host "OK  $setup"
 Write-Host "    sha256 $sha, $([math]::Round($size / 1MB, 1)) MB"
-Write-Host "    upload to hosting: publish\manifest.json, publish\CSharpCoach-Setup-$version.exe, publish\course-v*.db.gz"
+Write-Host "    upload to hosting: publish\manifest.json, publish\CSharpCoach-Setup-$version.exe, publish\course-v*.db.gz,"
+Write-Host "                       publish\manifest-rust.json, publish\course-rust-v*.db.gz"

@@ -74,7 +74,7 @@ public sealed class LessonViewModel : NotifyBase, IDisposable
 
         foreach (var concept in concepts)
         {
-            var a = AnalogyLibrary.All.FirstOrDefault(x => x.Concept == concept);
+            var a = Paths.Profile.Analogies.FirstOrDefault(x => x.Concept == concept);
             if (a is null) continue;
 
             var terms = a.Keywords.Select(k => k.Trim()).Where(k => k.Length >= 4)

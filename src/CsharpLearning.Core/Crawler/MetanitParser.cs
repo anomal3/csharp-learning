@@ -10,7 +10,8 @@ public sealed class MetanitParser
 {
     static readonly HtmlParser Parser = new();
 
-    public static readonly string BaseUrl = "https://metanit.com/sharp/tutorial/";
+    /// <summary>Каталог курса на сайте. ContentBuilder переключает его на Rust (--lang=rust) до начала работы.</summary>
+    public static string BaseUrl { get; set; } = "https://metanit.com/sharp/tutorial/";
 
     /// <summary>Сайт частично отдаёт кириллицу в cp1251 — подбираем кодировку по содержимому.</summary>
     static MetanitParser()
@@ -71,7 +72,7 @@ public sealed class MetanitParser
                     var href = a.GetAttribute("href") ?? "";
                     if (!href.EndsWith(".php")) continue;
                     var abs = NormalizeUrl(href, indexUrl);
-                    if (!abs.Contains("/sharp/tutorial/")) continue;
+                    if (!abs.Contains(new Uri(BaseUrl).AbsolutePath)) continue;
                     var slug = SlugOf(abs);
                     if (lessonSlugs.Contains(slug)) continue;
                     lessonSlugs.Add(slug);

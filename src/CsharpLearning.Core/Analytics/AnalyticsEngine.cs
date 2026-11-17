@@ -41,8 +41,9 @@ public sealed record LearnerSummary(
 /// </summary>
 public static class AnalyticsEngine
 {
-    public static LearnerSummary Build(ProgressDb progress, IReadOnlyList<Chapter> chapters)
+    public static LearnerSummary Build(ProgressDb progress, IReadOnlyList<Chapter> chapters, IReadOnlyList<Pedagogy.AnalogyLibrary.Analogy>? analogies = null)
     {
+        analogies ??= Pedagogy.AnalogyLibrary.All;
         var byLesson = progress.LoadProgress().ToDictionary(p => p.LessonId);
 
         var byConcept = new Dictionary<string, ConceptAcc>();
@@ -51,7 +52,7 @@ public static class AnalyticsEngine
         {
             foreach (var lref in ch.Lessons)
             {
-                var concepts = ConceptsOf(lref.Title);
+                var concepts = ConceptsOf(lref.Title, analogies);
                 byLesson.TryGetValue(lref.Id, out var p);
 
                 double minutes = (p?.SecondsRead ?? 0) / 60.0;
@@ -113,11 +114,11 @@ public static class AnalyticsEngine
             chapterStats);
     }
 
-    static HashSet<string> ConceptsOf(string lessonTitle)
+    static HashSet<string> ConceptsOf(string lessonTitle, IReadOnlyList<Pedagogy.AnalogyLibrary.Analogy> analogies)
     {
         var set = new HashSet<string>();
         var t = lessonTitle.ToLowerInvariant();
-        foreach (var a in Pedagogy.AnalogyLibrary.All)
+        foreach (var a in analogies)
         {
             foreach (var kw in a.Keywords)
             {

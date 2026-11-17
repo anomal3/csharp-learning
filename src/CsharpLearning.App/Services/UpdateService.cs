@@ -196,7 +196,8 @@ public static class UpdateService
 
     static async Task<UpdateInfo> FetchManifestAsync(CancellationToken ct)
     {
-        using var resp = await Http.GetAsync(new Uri(BaseUrl.TrimEnd('/') + "/manifest.json"), ct);
+        // у каждого курса свой манифест: manifest.json (C#) или manifest-rust.json
+        using var resp = await Http.GetAsync(new Uri(BaseUrl.TrimEnd('/') + "/" + Paths.Profile.ManifestFile), ct);
         resp.EnsureSuccessStatusCode();
         var json = (await resp.Content.ReadAsStringAsync(ct)).TrimStart('﻿');
 
@@ -235,8 +236,8 @@ public static class UpdateService
         Directory.CreateDirectory(Paths.UpdateCache);
         bool packed = info.FileName.EndsWith(".gz");
 
-        string raw = Path.Combine(Paths.UpdateCache, "download-" + info.ContentVersion + (packed ? ".db.gz" : ".db"));
-        string target = Path.Combine(Paths.UpdateCache, "download-" + info.ContentVersion + ".db");
+        string raw = Path.Combine(Paths.UpdateCache, "download-" + Paths.Profile.Id + "-" + info.ContentVersion + (packed ? ".db.gz" : ".db"));
+        string target = Path.Combine(Paths.UpdateCache, "download-" + Paths.Profile.Id + "-" + info.ContentVersion + ".db");
         if (File.Exists(raw)) File.Delete(raw);
         if (File.Exists(target)) File.Delete(target);
 
