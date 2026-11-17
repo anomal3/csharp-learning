@@ -2,13 +2,13 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Тёмные ComboBox и контекстное меню для редактора графов -->
-    <SolidColorBrush x:Key="GBg" Color="#FF1B1D24"/>
-    <SolidColorBrush x:Key="GPanel" Color="#FF22252E"/>
-    <SolidColorBrush x:Key="GCard" Color="#FF2E3341"/>
-    <SolidColorBrush x:Key="GLine" Color="#FF3A4152"/>
-    <SolidColorBrush x:Key="GText" Color="#FFE9ECF2"/>
-    <SolidColorBrush x:Key="GMuted" Color="#FF9AA4B8"/>
-    <SolidColorBrush x:Key="GAccent" Color="#FF56B4E9"/>
+    <SolidColorBrush x:Key="GBg" Color="#FF14171D"/>
+    <SolidColorBrush x:Key="GPanel" Color="#FF191D25"/>
+    <SolidColorBrush x:Key="GCard" Color="#FF262C38"/>
+    <SolidColorBrush x:Key="GLine" Color="#FF303746"/>
+    <SolidColorBrush x:Key="GText" Color="#FFE8ECF2"/>
+    <SolidColorBrush x:Key="GMuted" Color="#FF98A3B5"/>
+    <SolidColorBrush x:Key="GAccent" Color="#FF6AA9E0"/>
 
     <Style TargetType="ComboBoxItem">
         <Setter Property="Foreground" Value="{StaticResource GText}"/>
@@ -21,7 +21,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="b" Property="Background" Value="#FF2C4A63"/>
+                            <Setter TargetName="b" Property="Background" Value="#FF1C2B3D"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -45,7 +45,7 @@
 
     <Style TargetType="ComboBox">
         <Setter Property="Foreground" Value="{StaticResource GText}"/>
-        <Setter Property="Background" Value="#FF14161D"/>
+        <Setter Property="Background" Value="#FF11141A"/>
         <Setter Property="BorderBrush" Value="{StaticResource GLine}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Template">
@@ -65,7 +65,7 @@
                                  IsReadOnly="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}}"/>
                         <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
-                            <Border Background="#FF22283A" BorderBrush="{StaticResource GAccent}" BorderThickness="1" CornerRadius="4"
+                            <Border Background="#FF1B2029" BorderBrush="{StaticResource GAccent}" BorderThickness="1" CornerRadius="4"
                                     MinWidth="{TemplateBinding ActualWidth}" MaxHeight="260" Margin="0,2,8,8">
                                 <ScrollViewer>
                                     <StackPanel IsItemsHost="True"/>
@@ -95,7 +95,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="b" Property="Background" Value="#FF2C4A63"/>
+                            <Setter TargetName="b" Property="Background" Value="#FF1C2B3D"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -107,7 +107,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Border Background="#FF22283A" BorderBrush="{StaticResource GAccent}" BorderThickness="1" CornerRadius="5" Padding="3">
+                    <Border Background="#FF1B2029" BorderBrush="{StaticResource GAccent}" BorderThickness="1" CornerRadius="5" Padding="3">
                         <StackPanel IsItemsHost="True"/>
                     </Border>
                 </ControlTemplate>
@@ -121,8 +121,8 @@
 
     <Style TargetType="ToolTip">
         <Setter Property="Foreground" Value="{StaticResource GText}"/>
-        <Setter Property="Background" Value="#FF22283A"/>
-        <Setter Property="BorderBrush" Value="{StaticResource GAccent}"/>
+        <Setter Property="Background" Value="#FF10131A"/>
+        <Setter Property="BorderBrush" Value="#FF444E62"/>
         <Setter Property="Padding" Value="9,5"/>
         <Setter Property="FontSize" Value="12"/>
     </Style>
@@ -145,7 +145,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="b" Property="Background" Value="#FF3A4152"/>
+                            <Setter TargetName="b" Property="Background" Value="#FF2D3441"/>
+                            <Setter TargetName="b" Property="BorderBrush" Value="#FF444E62"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4"/>
@@ -156,11 +157,31 @@
         </Setter>
     </Style>
 
+    <!-- главная кнопка: насыщенный стальной синий с белым текстом (как PrimaryButton в основном окне) -->
     <Style x:Key="GPrimary" TargetType="Button" BasedOn="{StaticResource GButton}">
-        <Setter Property="Background" Value="#FF56B4E9"/>
-        <Setter Property="BorderBrush" Value="#FF56B4E9"/>
-        <Setter Property="Foreground" Value="#FF0E1116"/>
+        <Setter Property="Background" Value="#FF2F6DA3"/>
+        <Setter Property="BorderBrush" Value="#FF2F6DA3"/>
+        <Setter Property="Foreground" Value="#FFFFFFFF"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="#FF3A7DB8"/>
+                            <Setter TargetName="b" Property="BorderBrush" Value="#FF3A7DB8"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
 </ResourceDictionary>

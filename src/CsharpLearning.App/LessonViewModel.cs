@@ -156,16 +156,71 @@ public sealed class LessonViewModel : NotifyBase, IDisposable
     // ---------------- время чтения ----------------
     public double SecondsRead => _readClock.Elapsed.TotalSeconds;
 
+    /// <summary>Служебная переменная CSHARP_LEARNING_TIMESCALE=N ускоряет часы чтения в N раз — чтобы проверить, как плашка меняет цвет, не ожидая минут.</summary>
+    static readonly double TimeScale =
+        double.TryParse(Environment.GetEnvironmentVariable("CSHARP_LEARNING_TIMESCALE"), System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture, out var s) && s > 0 ? s : 1;
+
+    double ShownSeconds => _readClock.Elapsed.TotalSeconds * TimeScale;
+
     public string ReadTimeText
     {
         get
         {
-            var ts = TimeSpan.FromSeconds(_readClock.Elapsed.TotalSeconds);
+            var ts = TimeSpan.FromSeconds(ShownSeconds);
             return ts.TotalMinutes >= 1 ? $"{(int)ts.TotalMinutes} мин {ts.Seconds} с" : $"{ts.Seconds} с";
         }
     }
 
-    public void Tick() => Raise(nameof(ReadTimeText));
+    /// <summary>Сколько минут обычно занимает урок; для коротких — не меньше трёх, чтобы цвет не «горел» зря.</summary>
+    double BaseSeconds => Math.Max(Model.ReadMinutes, 3) * 60.0;
+
+    /// <summary>
+    /// Тон плашки «прочитано»: чем дольше сидишь над уроком, тем теплее цвет.
+    /// серый (до 3/4 нормы) → синий (в процессе) → янтарный (полторы нормы) → красный (втрое дольше).
+    /// </summary>
+    public string ReadTone
+    {
+        get
+        {
+            double r = ShownSeconds / BaseSeconds;
+            return r >= 3.0 ? "bad" : r >= 1.5 ? "warn" : r >= 0.75 ? "accent" : "neutral";
+        }
+    }
+
+    public string ReadHint
+    {
+        get
+        {
+            int norm = (int)Math.Round(BaseSeconds / 60.0);
+            return ReadTone switch
+            {
+                "bad" => $"Ты на этом уроке уже втрое дольше обычного (около {norm} мин). Сделай паузу или загляни в пояснения и аналогии.",
+                "warn" => $"Дольше обычного: на урок обычно уходит около {norm} мин. Если что-то непонятно — наведи мышь на подчёркнутые слова.",
+                "accent" => $"Идёт чтение. Обычно на этот урок уходит около {norm} мин.",
+                _ => $"Время на уроке. Обычно уходит около {norm} мин; чем дольше, тем теплее цвет плашки.",
+            };
+        }
+    }
+
+    /// <summary>Тон плашки «отвечено»: пока ничего — серый, идёт — синий, все верно — зелёный, есть ошибки в законченном — янтарный.</summary>
+    public string AnswerTone
+    {
+        get
+        {
+            int total = Questions.Count, done = AnsweredCount;
+            if (done == 0) return "neutral";
+            if (done < total) return "accent";
+            return CorrectCount == total ? "good" : "warn";
+        }
+    }
+
+    public void Tick()
+    {
+        Raise(nameof(ReadTimeText));
+        Raise(nameof(ReadTone));
+        Raise(nameof(ReadHint));
+    }
 
     void Close()
     {
@@ -194,6 +249,7 @@ public sealed class LessonViewModel : NotifyBase, IDisposable
         _state.RefreshProgress();
         Raise(nameof(AnsweredCount));
         Raise(nameof(CorrectCount));
+        Raise(nameof(AnswerTone));
         Raise(nameof(QuestionPosition));
     }
 

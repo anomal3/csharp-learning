@@ -42,7 +42,7 @@ public sealed class WindowExamplesView : ScrollViewer
         _current = ex;
         _root.Children.Clear();
 
-        _root.Children.Add(new TextBlock { Text = "Оконное приложение (Windows Forms)", FontSize = 22, FontWeight = FontWeights.SemiBold, Foreground = B("#FFE9ECF2") });
+        _root.Children.Add(new TextBlock { Text = "Оконное приложение (Windows Forms)", FontSize = 22, FontWeight = FontWeights.SemiBold, Foreground = B("#FFE8ECF2") });
         _root.Children.Add(Muted("Те же идеи урока, но не в чёрной консоли, а в окне: кнопки, поля ввода, надписи. Окно ниже настоящее — нажимайте и вводите.", 6));
 
         // выбор примера
@@ -56,7 +56,7 @@ public sealed class WindowExamplesView : ScrollViewer
                 var chip = new Border
                 {
                     Child = new TextBlock { Text = item.Title, FontSize = 13, Foreground = B(on ? "#FFFFFFFF" : "#FFB6BFD1") },
-                    Background = B(on ? "#FF2C4A63" : "#FF2E3341"), BorderBrush = B(on ? "#FF56B4E9" : "#FF3A4152"), BorderThickness = new Thickness(1),
+                    Background = B(on ? "#FF1C2B3D" : "#FF262C38"), BorderBrush = B(on ? "#FF6AA9E0" : "#FF303746"), BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(16), Padding = new Thickness(14, 6, 14, 6), Margin = new Thickness(0, 0, 8, 8), Cursor = Cursors.Hand,
                 };
                 chip.MouseLeftButtonUp += (s, a) => Show(item);
@@ -68,13 +68,13 @@ public sealed class WindowExamplesView : ScrollViewer
         // карточка «чему учит»
         var card = new Border
         {
-            Background = B("#FF272B36"), BorderBrush = B("#FF3A4152"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10),
+            Background = B("#FF1F242E"), BorderBrush = B("#FF303746"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10),
             Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(0, 10, 0, 14),
         };
         var cardBody = new StackPanel();
-        cardBody.Children.Add(new TextBlock { Text = ex.Title, FontSize = 16, FontWeight = FontWeights.SemiBold, Foreground = B("#FF56B4E9") });
+        cardBody.Children.Add(new TextBlock { Text = ex.Title, FontSize = 16, FontWeight = FontWeights.SemiBold, Foreground = B("#FF6AA9E0") });
         cardBody.Children.Add(Muted("Чему учит: " + ex.Lesson, 4, "#FFD0D6E4"));
-        if (ex.TryIt.Length > 0) cardBody.Children.Add(Muted("Попробуйте: " + ex.TryIt, 4, "#FF9AA4B8"));
+        if (ex.TryIt.Length > 0) cardBody.Children.Add(Muted("Попробуйте: " + ex.TryIt, 4, "#FF98A3B5"));
         card.Child = cardBody;
         _root.Children.Add(card);
 
@@ -107,13 +107,13 @@ public sealed class WindowExamplesView : ScrollViewer
         copy.Click += (s, e) => { Clipboard.SetText(code); copy.Content = "Скопировано ✓"; };
         DockPanel.SetDock(copy, Dock.Right);
         codeHead.Children.Add(copy);
-        codeHead.Children.Add(new TextBlock { Text = "Код Form1.cs", FontSize = 14, FontWeight = FontWeights.SemiBold, Foreground = B("#FFE9ECF2"), VerticalAlignment = VerticalAlignment.Center });
+        codeHead.Children.Add(new TextBlock { Text = "Код Form1.cs", FontSize = 14, FontWeight = FontWeights.SemiBold, Foreground = B("#FFE8ECF2"), VerticalAlignment = VerticalAlignment.Center });
 
         var right = new StackPanel();
         right.Children.Add(codeHead);
         right.Children.Add(new Border
         {
-            Background = B("#FF14161D"), BorderBrush = B("#FF3A4152"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(14, 12, 14, 12),
+            Background = B("#FF11141A"), BorderBrush = B("#FF303746"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(14, 12, 14, 12),
             Child = new ScrollViewer { HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = codeBlock },
         });
         Grid.SetColumn(right, 2);
@@ -121,24 +121,24 @@ public sealed class WindowExamplesView : ScrollViewer
         _root.Children.Add(grid);
 
         // разбор
-        _root.Children.Add(new TextBlock { Text = "Как это работает", FontSize = 18, FontWeight = FontWeights.SemiBold, Foreground = B("#FF56B4E9"), Margin = new Thickness(0, 24, 0, 8) });
+        _root.Children.Add(new TextBlock { Text = "Как это работает", FontSize = 18, FontWeight = FontWeights.SemiBold, Foreground = B("#FF6AA9E0"), Margin = new Thickness(0, 24, 0, 8) });
         int n = 1;
         foreach (var step in ex.Steps)
         {
             var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 4) };
             row.Children.Add(new Border
             {
-                Width = 24, Height = 24, CornerRadius = new CornerRadius(12), Background = B("#FF2C4A63"), VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 0, 12, 0),
+                Width = 24, Height = 24, CornerRadius = new CornerRadius(12), Background = B("#FF1C2B3D"), VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 0, 12, 0),
                 Child = new TextBlock { Text = (n++).ToString(), Foreground = B("#FFFFFFFF"), FontWeight = FontWeights.SemiBold, FontSize = 12.5, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
             });
             row.Children.Add(new TextBlock { Text = step, Foreground = B("#FFD0D6E4"), FontSize = 14, TextWrapping = TextWrapping.Wrap, MaxWidth = 760, LineHeight = 21 });
             _root.Children.Add(row);
         }
 
-        _root.Children.Add(Muted("Чтобы запустить такое окно у себя: в Visual Studio создайте проект «Приложение Windows Forms (.NET)», замените содержимое Form1.cs этим кодом и нажмите F5.", 20, "#FF8C97AD"));
+        _root.Children.Add(Muted("Чтобы запустить такое окно у себя: в Visual Studio создайте проект «Приложение Windows Forms (.NET)», замените содержимое Form1.cs этим кодом и нажмите F5.", 20, "#FF707B8F"));
     }
 
-    static TextBlock Muted(string text, double top, string color = "#FF9AA4B8") => new()
+    static TextBlock Muted(string text, double top, string color = "#FF98A3B5") => new()
     {
         Text = text, Foreground = B(color), FontSize = 13.5, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, top, 0, 0), LineHeight = 20,
     };

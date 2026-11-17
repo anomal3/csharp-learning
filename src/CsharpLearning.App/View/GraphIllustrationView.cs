@@ -92,7 +92,7 @@ public sealed class GraphIllustrationView : ScrollViewer
         var sample = GraphSamples.All[_sample];
         _root.Children.Clear();
 
-        _root.Children.Add(new TextBlock { Text = "Граф: та же программа из нод", FontSize = 22, FontWeight = FontWeights.SemiBold, Foreground = Solid("#FFE9ECF2") });
+        _root.Children.Add(new TextBlock { Text = "Граф: та же программа из нод", FontSize = 22, FontWeight = FontWeights.SemiBold, Foreground = Solid("#FFE8ECF2") });
         _root.Children.Add(Muted("Слева — программа как схема: белые стрелки задают порядок действий, цветные кружки несут данные. Справа — обычный код C#, который из неё получается. Колесо мыши — масштаб, правая кнопка — двигать вид.", 6));
 
         // выбор примера
@@ -106,7 +106,7 @@ public sealed class GraphIllustrationView : ScrollViewer
                 var chip = new Border
                 {
                     Child = new TextBlock { Text = GraphSamples.All[idx].Title, FontSize = 13, Foreground = Solid(on ? "#FFFFFFFF" : "#FFB6BFD1") },
-                    Background = Solid(on ? "#FF2C4A63" : "#FF2E3341"), BorderBrush = Solid(on ? "#FF56B4E9" : "#FF3A4152"), BorderThickness = new Thickness(1),
+                    Background = Solid(on ? "#FF1C2B3D" : "#FF262C38"), BorderBrush = Solid(on ? "#FF6AA9E0" : "#FF303746"), BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(16), Padding = new Thickness(14, 6, 14, 6), Margin = new Thickness(0, 0, 8, 8), Cursor = Cursors.Hand,
                 };
                 chip.MouseLeftButtonUp += (s, e) => ShowSample(idx);
@@ -117,7 +117,7 @@ public sealed class GraphIllustrationView : ScrollViewer
 
         var card = new Border
         {
-            Background = Solid("#FF272B36"), BorderBrush = Solid("#FF3A4152"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10),
+            Background = Solid("#FF1F242E"), BorderBrush = Solid("#FF303746"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10),
             Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(0, 10, 0, 14),
         };
         var body = new DockPanel();
@@ -131,7 +131,7 @@ public sealed class GraphIllustrationView : ScrollViewer
         DockPanel.SetDock(open, Dock.Right);
         body.Children.Add(open);
         var texts = new StackPanel();
-        texts.Children.Add(new TextBlock { Text = sample.Title, FontSize = 16, FontWeight = FontWeights.SemiBold, Foreground = Solid("#FF56B4E9") });
+        texts.Children.Add(new TextBlock { Text = sample.Title, FontSize = 16, FontWeight = FontWeights.SemiBold, Foreground = Solid("#FF6AA9E0") });
         texts.Children.Add(Muted(sample.Description, 4, "#FFD0D6E4"));
         body.Children.Add(texts);
         card.Child = body;
@@ -142,7 +142,7 @@ public sealed class GraphIllustrationView : ScrollViewer
         if (methods.Count > 1)
         {
             var chips = new WrapPanel { Margin = new Thickness(0, 0, 0, 10) };
-            chips.Children.Add(new TextBlock { Text = "Граф метода:", Foreground = Solid("#FF8C97AD"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 8) });
+            chips.Children.Add(new TextBlock { Text = "Граф метода:", Foreground = Solid("#FF707B8F"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 8) });
             foreach (var (cn, m) in methods)
             {
                 var cls = cn; var mm = m;
@@ -150,7 +150,7 @@ public sealed class GraphIllustrationView : ScrollViewer
                 var chip = new Border
                 {
                     Child = new TextBlock { Text = mm.IsCtor ? cls + " (конструктор)" : $"{cls}.{mm.Name}", FontSize = 12.5, Foreground = Solid(on ? "#FFFFFFFF" : "#FFB6BFD1") },
-                    Background = Solid(on ? "#FF2C4A63" : "#FF2E3341"), BorderBrush = Solid(on ? "#FF56B4E9" : "#FF3A4152"), BorderThickness = new Thickness(1),
+                    Background = Solid(on ? "#FF1C2B3D" : "#FF262C38"), BorderBrush = Solid(on ? "#FF6AA9E0" : "#FF303746"), BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 8), Cursor = Cursors.Hand,
                 };
                 chip.MouseLeftButtonUp += (s, e) => { _method = (cls, mm.Name); Build(); };
@@ -164,17 +164,17 @@ public sealed class GraphIllustrationView : ScrollViewer
         var grid = new StackPanel();
 
         if (_canvas.Parent is Border oldHost) oldHost.Child = null;
-        var cv = new Border { BorderBrush = Solid("#FF3A4152"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), ClipToBounds = true, Child = _canvas, Margin = new Thickness(0, 0, 0, 16) };
+        var cv = new Border { BorderBrush = Solid("#FF303746"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), ClipToBounds = true, Child = _canvas, Margin = new Thickness(0, 0, 0, 16) };
         grid.Children.Add(cv);
 
         var gen = GraphCodeGen.Generate(project, withUsings: true);
         CodeRender.Fill(_code, gen.Code);
         var codeBox = new Border
         {
-            Background = Solid("#FF14161D"), BorderBrush = Solid("#FF3A4152"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(14, 12, 14, 12),
+            Background = Solid("#FF11141A"), BorderBrush = Solid("#FF303746"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(14, 12, 14, 12),
             Child = new ScrollViewer { HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = _code },
         };
-        grid.Children.Add(new TextBlock { Text = "Получившийся код C#", FontSize = 14, FontWeight = FontWeights.SemiBold, Foreground = Solid("#FFE9ECF2"), Margin = new Thickness(0, 0, 0, 8) });
+        grid.Children.Add(new TextBlock { Text = "Получившийся код C#", FontSize = 14, FontWeight = FontWeights.SemiBold, Foreground = Solid("#FFE8ECF2"), Margin = new Thickness(0, 0, 0, 8) });
         grid.Children.Add(codeBox);
         _root.Children.Add(grid);
 
@@ -186,7 +186,7 @@ public sealed class GraphIllustrationView : ScrollViewer
         }
     }
 
-    static TextBlock Muted(string text, double top, string color = "#FF9AA4B8") => new()
+    static TextBlock Muted(string text, double top, string color = "#FF98A3B5") => new()
     {
         Text = text, Foreground = Solid(color), FontSize = 13.5, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, top, 0, 0), LineHeight = 20,
     };

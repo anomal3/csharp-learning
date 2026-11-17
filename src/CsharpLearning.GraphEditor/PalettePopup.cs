@@ -21,12 +21,12 @@ public sealed class PalettePopup
 
     public PalettePopup()
     {
-        _title = new TextBlock { Foreground = CodeRender.Solid("#FF9AA4B8"), FontSize = 11.5, Margin = new Thickness(2, 0, 0, 5) };
+        _title = new TextBlock { Foreground = CodeRender.Solid("#FF98A3B5"), FontSize = 11.5, Margin = new Thickness(2, 0, 0, 5) };
         _search = new TextBox
         {
             Height = 28, FontSize = 13, Padding = new Thickness(7, 3, 7, 3), VerticalContentAlignment = VerticalAlignment.Center,
-            Background = CodeRender.Solid("#FF14161D"), Foreground = CodeRender.Solid("#FFE9ECF2"),
-            BorderBrush = CodeRender.Solid("#FF3A4152"), CaretBrush = CodeRender.Solid("#FF56B4E9"),
+            Background = CodeRender.Solid("#FF11141A"), Foreground = CodeRender.Solid("#FFE8ECF2"),
+            BorderBrush = CodeRender.Solid("#FF303746"), CaretBrush = CodeRender.Solid("#FF6AA9E0"),
         };
         _list = new ListBox
         {
@@ -40,7 +40,7 @@ public sealed class PalettePopup
                                     <ContentPresenter/>
                                 </Border>
                                 <ControlTemplate.Triggers>
-                                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="b" Property="Background" Value="#FF2C4A63"/></Trigger>
+                                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="b" Property="Background" Value="#FF1C2B3D"/></Trigger>
                                     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="#FF2A3550"/></Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -57,7 +57,7 @@ public sealed class PalettePopup
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding Title}" Foreground="#FFE9ECF2" FontSize="12.5" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Title}" Foreground="#FFE8ECF2" FontSize="12.5" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="1" Text="{Binding Category}" Foreground="#FF7C879C" FontSize="11" Margin="12,1,0,0"/>
                 </Grid>
             </DataTemplate>
@@ -70,7 +70,7 @@ public sealed class PalettePopup
 
         _popup.Child = new Border
         {
-            Background = CodeRender.Solid("#FF22283A"), BorderBrush = CodeRender.Solid("#FF56B4E9"), BorderThickness = new Thickness(1),
+            Background = CodeRender.Solid("#FF1B2029"), BorderBrush = CodeRender.Solid("#FF6AA9E0"), BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8), Padding = new Thickness(10), Margin = new Thickness(0, 0, 14, 14),
             Child = panel,
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 14, Opacity = 0.5, ShadowDepth = 3 },

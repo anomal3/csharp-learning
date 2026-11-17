@@ -19,7 +19,7 @@ public static class FormDialog
         {
             Title = title, Owner = owner, WindowStartupLocation = owner is null ? WindowStartupLocation.CenterScreen : WindowStartupLocation.CenterOwner,
             SizeToContent = SizeToContent.Height, Width = 460, ResizeMode = ResizeMode.NoResize, ShowInTaskbar = false,
-            Background = CodeRender.Solid("#FF1B1D24"), Foreground = CodeRender.Solid("#FFE9ECF2"), FontSize = 13,
+            Background = CodeRender.Solid("#FF14171D"), Foreground = CodeRender.Solid("#FFE8ECF2"), FontSize = 13,
         };
         win.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/CsharpLearning.GraphEditor;component/Themes/GraphDark.xaml") });
 
@@ -29,13 +29,13 @@ public static class FormDialog
 
         foreach (var f in fields)
         {
-            panel.Children.Add(new TextBlock { Text = f.Label, Foreground = CodeRender.Solid("#FF9AA4B8"), FontSize = 12, Margin = new Thickness(0, 8, 0, 3) });
+            panel.Children.Add(new TextBlock { Text = f.Label, Foreground = CodeRender.Solid("#FF98A3B5"), FontSize = 12, Margin = new Thickness(0, 8, 0, 3) });
             FrameworkElement input;
             switch (f.Kind)
             {
                 case FormKind.Check:
                 {
-                    var cb = new CheckBox { IsChecked = f.Value == "true", Content = f.Hint, Foreground = CodeRender.Solid("#FFE9ECF2") };
+                    var cb = new CheckBox { IsChecked = f.Value == "true", Content = f.Hint, Foreground = CodeRender.Solid("#FFE8ECF2") };
                     getters[f.Key] = () => cb.IsChecked == true ? "true" : "false";
                     input = cb;
                     break;
@@ -107,8 +107,8 @@ public static class FormDialog
     static TextBox Box(string value) => new()
     {
         Text = value, Height = 28, Padding = new Thickness(6, 3, 6, 3), VerticalContentAlignment = VerticalAlignment.Center,
-        Background = CodeRender.Solid("#FF14161D"), Foreground = CodeRender.Solid("#FFE9ECF2"),
-        BorderBrush = CodeRender.Solid("#FF3A4152"), CaretBrush = CodeRender.Solid("#FF56B4E9"),
+        Background = CodeRender.Solid("#FF11141A"), Foreground = CodeRender.Solid("#FFE8ECF2"),
+        BorderBrush = CodeRender.Solid("#FF303746"), CaretBrush = CodeRender.Solid("#FF6AA9E0"),
     };
 
     public static bool Confirm(Window? owner, string title, string message)

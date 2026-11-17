@@ -52,8 +52,8 @@ public sealed class InverseBoolConverter : IValueConverter
 /// <summary>Верно/неверно → цвет ответа.</summary>
 public sealed class CorrectToBrushConverter : IValueConverter
 {
-    static readonly Brush Good = Freeze("#FF63C77A");
-    static readonly Brush Bad = Freeze("#FFE4695F");
+    static readonly Brush Good = Freeze("#FF5BB98C");
+    static readonly Brush Bad = Freeze("#FFDC736C");
 
     static Brush Freeze(string hex)
     {
@@ -69,13 +69,48 @@ public sealed class CorrectToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>
+/// Тон плашки («neutral», «accent», «good», «warn», «bad») → кисть из темы.
+/// ConverterParameter: «fg» — цвет текста/значка, «bg» — подложка, «line» — рамка.
+/// Так цвета остаются в Styles/Theme.xaml, а не размазываются по коду.
+/// </summary>
+public sealed class ToneBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        string tone = value as string ?? "neutral";
+        string key = (tone.ToLowerInvariant(), (parameter as string ?? "fg").ToLowerInvariant()) switch
+        {
+            ("accent", "bg") => "AccentSoft",
+            ("accent", "line") => "AccentLine",
+            ("accent", _) => "Accent",
+            ("good", "bg") => "GoodSoft",
+            ("good", "line") => "GoodLine",
+            ("good", _) => "Good",
+            ("warn", "bg") => "WarnSoft",
+            ("warn", "line") => "WarnLine",
+            ("warn", _) => "Warn",
+            ("bad", "bg") => "BadSoft",
+            ("bad", "line") => "BadLine",
+            ("bad", _) => "Bad",
+            (_, "bg") => "NeutralSoft",
+            (_, "line") => "NeutralLine",
+            _ => "Neutral",
+        };
+        return Application.Current?.TryFindResource(key) as Brush ?? Brushes.Gray;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Health темы → цвет метки в аналитике.</summary>
 public sealed class HealthToBrushConverter : IValueConverter
 {
-    static readonly Brush Good = Freeze("#FF63C77A");
-    static readonly Brush Normal = Freeze("#FF9AA4B8");
-    static readonly Brush Struggling = Freeze("#FFE4695F");
-    static readonly Brush NotRead = Freeze("#FF5A6274");
+    static readonly Brush Good = Freeze("#FF5BB98C");
+    static readonly Brush Normal = Freeze("#FF6AA9E0");
+    static readonly Brush Struggling = Freeze("#FFDC736C");
+    static readonly Brush NotRead = Freeze("#FF4A5366");
 
     static Brush Freeze(string hex)
     {
@@ -265,11 +300,12 @@ public static class RichText
     public static BlockVm? GetBlock(DependencyObject d) => (BlockVm?)d.GetValue(BlockProperty);
     public static void SetBlock(DependencyObject d, BlockVm? v) => d.SetValue(BlockProperty, v);
 
-    static readonly Brush Accent = Frozen("#FF56B4E9");
-    static readonly Brush CardBg = Frozen("#FF22283A");
-    static readonly Brush Muted = Frozen("#FF9AA4B8");
-    static readonly Brush Light = Frozen("#FFE9ECF2");
-    static readonly Brush Good = Frozen("#FF63C77A");
+    static readonly Brush Accent = Frozen("#FF6AA9E0");
+    static readonly Brush CardBg = Frozen("#FF10131A");
+    static readonly Brush Border = Frozen("#FF444E62");
+    static readonly Brush Muted = Frozen("#FF98A3B5");
+    static readonly Brush Light = Frozen("#FFE8ECF2");
+    static readonly Brush Good = Frozen("#FF5BB98C");
 
     static Brush Frozen(string hex)
     {
@@ -336,7 +372,7 @@ public static class RichText
 
         return new System.Windows.Controls.ToolTip
         {
-            Content = panel, Background = CardBg, BorderBrush = Accent, BorderThickness = new Thickness(1),
+            Content = panel, Background = CardBg, BorderBrush = Border, BorderThickness = new Thickness(1),
             Padding = new Thickness(14, 10, 14, 12),
         };
     }

@@ -43,7 +43,7 @@ public sealed class NodePalettePanel : Grid
         head.Children.Add(new TextBlock
         {
             Text = "Нажмите на ноду, чтобы добавить, или перетащите её на холст.",
-            Foreground = CodeRender.Solid("#FF8C97AD"), FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 7),
+            Foreground = CodeRender.Solid("#FF707B8F"), FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 7),
         });
         _search.Width = double.NaN;
         _search.Height = 30;
@@ -78,15 +78,15 @@ public sealed class NodePalettePanel : Grid
 
             var head = new Border
             {
-                Background = CodeRender.Solid("#FF2A2F3D"), CornerRadius = new CornerRadius(6), Padding = new Thickness(9, 6, 9, 6),
+                Background = CodeRender.Solid("#FF262C38"), CornerRadius = new CornerRadius(6), Padding = new Thickness(9, 6, 9, 6),
                 Margin = new Thickness(0, 7, 0, 3), Cursor = Cursors.Hand,
             };
             var row = new DockPanel();
             row.Children.Add(new Border { Width = 4, Height = 14, CornerRadius = new CornerRadius(2), Background = CodeRender.Solid(color), Margin = new Thickness(0, 0, 8, 0) });
-            var arrow = new TextBlock { Text = open ? "▾" : "▸", Foreground = CodeRender.Solid("#FF8C97AD"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+            var arrow = new TextBlock { Text = open ? "▾" : "▸", Foreground = CodeRender.Solid("#FF707B8F"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
             DockPanel.SetDock(arrow, Dock.Right);
             row.Children.Add(arrow);
-            row.Children.Add(new TextBlock { Text = cat, FontWeight = FontWeights.SemiBold, FontSize = 13, Foreground = CodeRender.Solid("#FFE9ECF2") });
+            row.Children.Add(new TextBlock { Text = cat, FontWeight = FontWeights.SemiBold, FontSize = 13, Foreground = CodeRender.Solid("#FFE8ECF2") });
             head.Child = row;
             head.MouseLeftButtonUp += (s, e) =>
             {
@@ -100,7 +100,7 @@ public sealed class NodePalettePanel : Grid
         }
 
         if (_list.Children.Count == 0)
-            _list.Children.Add(new TextBlock { Text = "Ничего не найдено", Foreground = CodeRender.Solid("#FF8C97AD"), Margin = new Thickness(12, 10, 0, 0), FontSize = 13 });
+            _list.Children.Add(new TextBlock { Text = "Ничего не найдено", Foreground = CodeRender.Solid("#FF707B8F"), Margin = new Thickness(12, 10, 0, 0), FontSize = 13 });
     }
 
     UIElement MakeRow(PaletteItem item, string color)
@@ -110,7 +110,7 @@ public sealed class NodePalettePanel : Grid
         if (item.Hint.Length > 0)
             sp.Children.Add(new TextBlock
             {
-                Text = item.Hint, FontSize = 11.5, Foreground = CodeRender.Solid("#FF8C97AD"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0), MaxHeight = 32,
+                Text = item.Hint, FontSize = 11.5, Foreground = CodeRender.Solid("#FF707B8F"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0), MaxHeight = 32,
                 TextTrimming = TextTrimming.CharacterEllipsis,
             });
 

@@ -14,7 +14,9 @@
         <view:BoolToVisibilityConverter x:Key="BoolVis"/>
         <view:InverseBoolToVisibilityConverter x:Key="InvBoolVis"/>
         <view:BoolToStringConverter x:Key="CorrectMark" WhenTrue="Верно" WhenFalse="Неверно"/>
+        <view:BoolToStringConverter x:Key="CorrectGlyph" WhenTrue="&#xE73E;" WhenFalse="&#xE711;"/>
         <view:HealthToBrushConverter x:Key="HealthBrush"/>
+        <view:ToneBrushConverter x:Key="Tone"/>
         <view:CodeHighlightConverter x:Key="Highlight"/>
         <view:InverseBoolConverter x:Key="BoolToInverseConverter"/>
         <view:CorrectToBrushConverter x:Key="HealthForAnswer"/>
@@ -69,18 +71,25 @@
             <Setter Property="Margin" Value="0,0,0,4"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="7" Padding="10,7">
-                            <ContentPresenter/>
-                        </Border>
+                        <Grid>
+                            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="7" Padding="10,7">
+                                <ContentPresenter/>
+                            </Border>
+                            <!-- у выбранного урока слева тонкая акцентная полоса -->
+                            <Border x:Name="bar" Width="3" CornerRadius="2" Margin="0,8" HorizontalAlignment="Left"
+                                    Background="{StaticResource Accent}" Visibility="Collapsed"/>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="b" Property="Background" Value="{StaticResource CardSoftBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="b" Property="Background" Value="{StaticResource AccentSoft}"/>
+                                <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -95,42 +104,77 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Mark}" FontSize="12" VerticalAlignment="Top"
-                           Foreground="{StaticResource Good}" Margin="0,2,0,0"/>
+                <!-- статус урока: пустое кольцо — не начат, синее — читаю, зелёная галочка — пройден -->
+                <Border Grid.Column="0" Width="14" Height="14" CornerRadius="7" VerticalAlignment="Top" Margin="0,3,0,0"
+                        BorderThickness="1.5" HorizontalAlignment="Left">
+                    <TextBlock Text="&#xE73E;" FontSize="8" FontWeight="Bold" Foreground="{StaticResource Bg}" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="done">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="BorderBrush" Value="{StaticResource LineStrong}"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="done">
+                                    <Setter Property="Background" Value="{StaticResource Good}"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource Good}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="reading">
+                                    <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                    <Setter Property="Background" Value="{StaticResource AccentSoft}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
                 <StackPanel Grid.Column="1">
                     <TextBlock Text="{Binding ShortTitle}" TextWrapping="Wrap" FontSize="13.2"/>
-                    <TextBlock Text="{Binding MetaText}" Style="{StaticResource Muted}" FontSize="11.5" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding MetaText}" Style="{StaticResource Muted}" FontSize="11.5" Margin="0,2,0,0" Foreground="{StaticResource TextDim}"/>
                 </StackPanel>
-                <Border Grid.Column="2" Style="{StaticResource Chip}" VerticalAlignment="Top" Padding="7,2"
+                <Border Grid.Column="2" Style="{StaticResource Chip}" VerticalAlignment="Top" Padding="6,1" Margin="6,1,0,0" CornerRadius="9"
                         Visibility="{Binding HasQuestions, Converter={StaticResource BoolVis}}">
-                    <TextBlock Text="{Binding QuestionCount}" FontSize="11" Foreground="{StaticResource Accent}"/>
+                    <TextBlock Text="{Binding QuestionCount}" Style="{StaticResource BadgeText}" FontSize="11"/>
                 </Border>
             </Grid>
         </DataTemplate>
 
         <!-- карточка пояснения -->
         <DataTemplate x:Key="ExplanationTemplate">
-            <Border Style="{StaticResource ExplanationCard}" Margin="0,0,0,10">
+            <ContentControl Style="{StaticResource CalloutInfo}" Margin="0,0,0,10">
                 <StackPanel>
-                    <TextBlock Text="{Binding Title}" Style="{StaticResource H3}" Foreground="{StaticResource Accent}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE82F;" Foreground="{StaticResource Accent}" FontSize="14" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding Title}" Style="{StaticResource H3}" Foreground="{StaticResource Accent}"/>
+                    </StackPanel>
                     <TextBlock Text="{Binding Body}" Style="{StaticResource Body}" Margin="0,6,0,0"/>
                 </StackPanel>
-            </Border>
+            </ContentControl>
         </DataTemplate>
 
         <DataTemplate x:Key="TrapTemplate">
-            <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource Bad}" BorderThickness="1"
-                    CornerRadius="9" Padding="14,10" Margin="0,0,0,8">
+            <ContentControl Style="{StaticResource CalloutBad}" Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="{Binding Title}" Style="{StaticResource H3}" Foreground="{StaticResource Bad}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE7BA;" Foreground="{StaticResource Bad}" FontSize="14" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding Title}" Style="{StaticResource H3}" Foreground="{StaticResource Bad}"/>
+                    </StackPanel>
                     <TextBlock Text="{Binding Body}" Style="{StaticResource Body}" Margin="0,5,0,0"/>
                 </StackPanel>
-            </Border>
+            </ContentControl>
         </DataTemplate>
 
         <DataTemplate x:Key="TagTemplate">
-            <Border Style="{StaticResource Chip}">
-                <TextBlock Text="{Binding}" FontSize="11.5" Foreground="{StaticResource TextMuted}"/>
+            <Border Style="{StaticResource TagChip}">
+                <TextBlock Text="{Binding}" Style="{StaticResource BadgeText}" Foreground="{StaticResource TextDim}"/>
             </Border>
         </DataTemplate>
 
@@ -196,31 +240,62 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="CSharpCoach" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource Text}"/>
-                    <TextBlock Text="{Binding StatusLine}" Style="{StaticResource Muted}" Margin="0,3,0,0"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <!-- знак программы: тёмная плитка с акцентной скобкой кода -->
+                    <Border Width="34" Height="34" CornerRadius="8" Background="{StaticResource AccentSoft}"
+                            BorderBrush="{StaticResource AccentLine}" BorderThickness="1" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <TextBlock Text="&lt;/&gt;" FontFamily="{StaticResource CodeFont}" FontSize="13" FontWeight="Bold"
+                                   Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" LineHeight="NaN"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="CSharpCoach" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource Text}" LineHeight="22"/>
+                        <TextBlock Text="{Binding StatusLine}" Style="{StaticResource Muted}" Margin="0,2,0,0" Foreground="{StaticResource TextDim}"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- выбор языка курса: C# или Rust; у каждого свои уроки и свой прогресс -->
-                    <Button x:Name="LangCsBtn" Style="{StaticResource FlatButton}" Content="C#" Margin="0,0,2,0" Click="OnSwitchLang" Tag="csharp"
-                            ToolTip="Курс C#"/>
-                    <Button x:Name="LangRustBtn" Style="{StaticResource FlatButton}" Content="Rust" Margin="0,0,16,0" Click="OnSwitchLang" Tag="rust"
-                            ToolTip="Курс Rust"/>
-                    <Button x:Name="ToggleLeftBtn" Style="{StaticResource FlatButton}" Content="◧ Оглавление" Margin="0,0,8,0"
-                            Click="OnToggleLeft" ToolTip="Свернуть или показать оглавление"/>
-                    <Button x:Name="ToggleRightBtn" Style="{StaticResource FlatButton}" Content="Пример ◨" Margin="0,0,16,0"
-                            Click="OnToggleRight" ToolTip="Свернуть или показать панель примера"/>
-                    <Button Style="{StaticResource PrimaryButton}" Content="Граф-режим" Margin="0,0,16,0"
+                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                            CornerRadius="7" Padding="2" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="LangCsBtn" Style="{StaticResource SegmentButtonActive}" Content="C#" Margin="0,0,2,0" Click="OnSwitchLang" Tag="csharp"
+                                    ToolTip="Курс C#"/>
+                            <Button x:Name="LangRustBtn" Style="{StaticResource SegmentButton}" Content="Rust" Click="OnSwitchLang" Tag="rust"
+                                    ToolTip="Курс Rust"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- панели -->
+                    <Button x:Name="ToggleLeftBtn" Style="{StaticResource GhostButton}" Margin="0,0,2,0"
+                            Click="OnToggleLeft" ToolTip="Свернуть или показать оглавление">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="LeftIcon" Style="{StaticResource Icon}" Text="&#xE76B;" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,8,0"/>
+                            <TextBlock Text="Оглавление" FontSize="13.5" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" LineHeight="NaN"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ToggleRightBtn" Style="{StaticResource GhostButton}" Margin="0,0,14,0"
+                            Click="OnToggleRight" ToolTip="Свернуть или показать панель примера">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="RightIcon" Style="{StaticResource Icon}" Text="&#xE76C;" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,8,0"/>
+                            <TextBlock Text="Пример" FontSize="13.5" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" LineHeight="NaN"/>
+                        </StackPanel>
+                    </Button>
+                    <Border Width="1" Height="22" Background="{StaticResource Line}" Margin="0,0,14,0"/>
+                    <!-- режимы -->
+                    <Button Style="{StaticResource TonalButton}" Content="Граф-режим" Margin="0,0,8,0"
                             Visibility="{Binding HasDotNetTools, Converter={StaticResource BoolVis}}"
                             Click="OnOpenGraph" ToolTip="Визуальное программирование на C#: ноды, классы, исходный код"/>
                     <Button Style="{StaticResource FlatButton}" Content="Аналитика" Margin="0,0,8,0"
                             Command="{Binding ShowDashboardCommand}"/>
-                    <Button Style="{StaticResource FlatButton}" Content="Расширенный режим" Margin="0,0,8,0"
+                    <Button Style="{StaticResource FlatButton}" Content="Расширенный режим" Margin="0,0,14,0"
                             Visibility="{Binding HasDotNetTools, Converter={StaticResource BoolVis}}"
                             Command="{Binding ToggleAdvancedCommand}"/>
-                    <Button Style="{StaticResource FlatButton}" Content="Проверить обновление"
-                            Click="OnCheckUpdates" ToolTip="Новая версия программы и новые уроки; прогресс сохраняется"/>
+                    <Button Style="{StaticResource GhostButton}"
+                            Click="OnCheckUpdates" ToolTip="Новая версия программы и новые уроки; прогресс сохраняется">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE895;" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,8,0"/>
+                            <TextBlock Text="Обновления" FontSize="13.5" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" LineHeight="NaN"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -243,9 +318,27 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBox Grid.Row="0" Style="{StaticResource SearchBox}" Margin="0,0,0,10"
-                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
-                             ToolTip="Поиск по названию урока и тегу"/>
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <TextBox x:Name="SearchInput" Style="{StaticResource SearchBox}" Padding="32,8,10,8"
+                                 Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Поиск по названию урока и тегу"/>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE721;" FontSize="13" Margin="11,0,0,0" HorizontalAlignment="Left"
+                                   IsHitTestVisible="False" Foreground="{StaticResource TextDim}"/>
+                        <!-- подсказка в пустом поле -->
+                        <TextBlock Text="Поиск по урокам и тегам" Margin="33,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Foreground="{StaticResource TextDim}" FontSize="13.5" LineHeight="NaN">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource Muted}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=SearchInput}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
 
                     <ListView Grid.Row="1" x:Name="LessonList" BorderThickness="0" Background="Transparent"
                               ItemsSource="{Binding Source={StaticResource LessonView}}"
@@ -263,14 +356,18 @@
                             <GroupStyle>
                                 <GroupStyle.HeaderTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource CardBrush}" CornerRadius="7" Padding="10,6" Margin="0,12,0,6">
+                                        <!-- глава: строгий заголовок с линией снизу, без цветной заливки -->
+                                        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="6,4,6,8" Margin="0,14,0,6">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="{Binding Name.Title}" FontWeight="SemiBold" FontSize="13.5" Foreground="{StaticResource Accent}"/>
-                                                <TextBlock Grid.Column="1" Text="{Binding Name.Progress}" Style="{StaticResource Muted}" FontSize="11.5"/>
+                                                <TextBlock Grid.Column="0" Text="{Binding Name.Title}" FontWeight="SemiBold" FontSize="13" LineHeight="18"
+                                                           Foreground="{StaticResource Text}"/>
+                                                <Border Grid.Column="1" Style="{StaticResource Chip}" Margin="8,0,0,0" Padding="6,1" CornerRadius="9" VerticalAlignment="Top">
+                                                    <TextBlock Text="{Binding Name.Progress}" Style="{StaticResource BadgeText}" FontSize="11"/>
+                                                </Border>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -304,11 +401,38 @@
                                    Text="{Binding CurrentLesson.Title}" Style="{StaticResource H1}" Margin="0,4,0,0"/>
 
                         <WrapPanel Margin="0,12,0,0">
-                            <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding CurrentLesson.EstimatedMinutes, StringFormat={}{0} мин чтения}" FontSize="11.5" Foreground="{StaticResource TextMuted}"/></Border>
-                            <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding CurrentLesson.CodeCount, StringFormat={}примеров: {0}}" FontSize="11.5" Foreground="{StaticResource TextMuted}"/></Border>
-                            <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding CurrentLesson.QuestionCount, StringFormat={}вопросов: {0}}" FontSize="11.5" Foreground="{StaticResource TextMuted}"/></Border>
-                            <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding CurrentLesson.ReadTimeText, StringFormat={}прочитано: {0}}" FontSize="11.5" Foreground="{StaticResource Accent}"/></Border>
-                            </WrapPanel>
+                            <!-- справочные плашки — нейтральные, в одном наборе значков -->
+                            <Border Style="{StaticResource Chip}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE121;" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{Binding CurrentLesson.EstimatedMinutes, StringFormat={}{0} мин чтения}" Style="{StaticResource BadgeText}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Chip}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE943;" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{Binding CurrentLesson.CodeCount, StringFormat={}примеров: {0}}" Style="{StaticResource BadgeText}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Chip}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE897;" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{Binding CurrentLesson.QuestionCount, StringFormat={}вопросов: {0}}" Style="{StaticResource BadgeText}"/>
+                                </StackPanel>
+                            </Border>
+                            <!-- «сколько прошло»: цвет плашки теплеет, чем дольше сидишь над уроком (см. LessonViewModel.ReadTone) -->
+                            <Border Style="{StaticResource Chip}"
+                                    Background="{Binding CurrentLesson.ReadTone, Converter={StaticResource Tone}, ConverterParameter=bg}"
+                                    BorderBrush="{Binding CurrentLesson.ReadTone, Converter={StaticResource Tone}, ConverterParameter=line}"
+                                    ToolTip="{Binding CurrentLesson.ReadHint}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE916;" Margin="0,0,6,0"
+                                               Foreground="{Binding CurrentLesson.ReadTone, Converter={StaticResource Tone}, ConverterParameter=fg}"/>
+                                    <TextBlock Text="{Binding CurrentLesson.ReadTimeText, StringFormat={}прочитано: {0}}" Style="{StaticResource BadgeText}"
+                                               Foreground="{Binding CurrentLesson.ReadTone, Converter={StaticResource Tone}, ConverterParameter=fg}"/>
+                                </StackPanel>
+                            </Border>
+                        </WrapPanel>
                         <ItemsControl ItemsSource="{Binding CurrentLesson.Model.Tags}" ItemTemplate="{StaticResource TagTemplate}">
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                         </ItemsControl>
@@ -317,12 +441,21 @@
                         <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                             <Button Style="{StaticResource FlatButton}" Content="← предыдущий" Margin="0,0,8,0"
                                     Command="{Binding PrevLessonCommand}"/>
-                            <Button Style="{StaticResource PrimaryButton}" Content="следующий урок →"
+                            <Button Style="{StaticResource TonalButton}" Content="следующий урок →"
                                     Command="{Binding NextLessonCommand}"/>
-                            <TextBlock Style="{StaticResource Muted}" Margin="14,0,0,0" VerticalAlignment="Center"
-                                       Text="{Binding CurrentLesson.AnsweredCount, StringFormat={}отвечено: {0}}"/>
-                            <TextBlock Style="{StaticResource Muted}" Margin="10,0,0,0" VerticalAlignment="Center"
-                                       Text="{Binding CurrentLesson.CorrectCount, StringFormat={}верно: {0}}"/>
+                            <!-- ответы: серый → синий (идёт) → зелёный (всё верно) / янтарный (есть ошибки) -->
+                            <Border Style="{StaticResource Chip}" Margin="16,0,6,0" VerticalAlignment="Center"
+                                    Background="{Binding CurrentLesson.AnswerTone, Converter={StaticResource Tone}, ConverterParameter=bg}"
+                                    BorderBrush="{Binding CurrentLesson.AnswerTone, Converter={StaticResource Tone}, ConverterParameter=line}">
+                                <TextBlock Style="{StaticResource BadgeText}" Text="{Binding CurrentLesson.AnsweredCount, StringFormat={}отвечено: {0}}"
+                                           Foreground="{Binding CurrentLesson.AnswerTone, Converter={StaticResource Tone}, ConverterParameter=fg}"/>
+                            </Border>
+                            <Border Style="{StaticResource Chip}" Margin="0" VerticalAlignment="Center"
+                                    Background="{Binding CurrentLesson.AnswerTone, Converter={StaticResource Tone}, ConverterParameter=bg}"
+                                    BorderBrush="{Binding CurrentLesson.AnswerTone, Converter={StaticResource Tone}, ConverterParameter=line}">
+                                <TextBlock Style="{StaticResource BadgeText}" Text="{Binding CurrentLesson.CorrectCount, StringFormat={}верно: {0}}"
+                                           Foreground="{Binding CurrentLesson.AnswerTone, Converter={StaticResource Tone}, ConverterParameter=fg}"/>
+                            </Border>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -335,11 +468,14 @@
                 <ScrollViewer Grid.Row="1" x:Name="LessonScroll" VerticalScrollBarVisibility="Auto" Padding="22,18,22,26"
                               Visibility="{Binding HasLesson, Converter={StaticResource BoolVis}}">
                     <StackPanel>
-                        <Border Style="{StaticResource CardSoft}" Padding="12,8" Margin="0,0,0,6"
-                                Visibility="{Binding CurrentLesson.HasGlossary, Converter={StaticResource BoolVis}}">
-                            <TextBlock Style="{StaticResource Muted}" FontSize="12.5"
-                                       Text="💡 Слова, подчёркнутые пунктиром, — наведи на них мышь: объясню на примере из жизни."/>
-                        </Border>
+                        <ContentControl Style="{StaticResource CalloutNote}" Padding="12,8" Margin="0,0,0,6"
+                                        Visibility="{Binding CurrentLesson.HasGlossary, Converter={StaticResource BoolVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource Icon}" Text="&#xE82F;" FontSize="14" Foreground="{StaticResource Accent}" Margin="0,0,10,0"/>
+                                <TextBlock Style="{StaticResource Muted}" FontSize="12.5" VerticalAlignment="Center"
+                                           Text="Слова, подчёркнутые пунктиром, — наведи на них мышь: объясню на примере из жизни."/>
+                            </StackPanel>
+                        </ContentControl>
 
                         <ItemsControl ItemsSource="{Binding CurrentLesson.TextBlocks}"
                                       ItemTemplateSelector="{StaticResource BlockSelector}"/>
@@ -387,7 +523,7 @@
                             <TextBlock Text="Последние ответы" Style="{StaticResource H2}" Margin="0,18,0,10"/>
                             <ItemsControl ItemsSource="{Binding RecentAnswers}" ItemTemplate="{StaticResource AnswerLogTemplate}"/>
 
-                            <Button Style="{StaticResource FlatButton}" Content="сбросить весь прогресс" Margin="0,16,0,0"
+                            <Button Style="{StaticResource DangerButton}" Content="сбросить весь прогресс" Margin="0,16,0,0"
                                     HorizontalAlignment="Left" Command="{Binding ResetProgressCommand}"/>
                         </StackPanel>
                     </ScrollViewer>
@@ -486,9 +622,9 @@
                         <StackPanel Grid.Row="0" Margin="16,14,16,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Пример по этому уроку" Style="{StaticResource H2}"/>
-                                <Border Style="{StaticResource Chip}" Margin="12,2,0,0"
+                                <Border Style="{StaticResource BadgeAccent}" Margin="12,2,0,0"
                                         Visibility="{Binding CurrentQuestion.IsGui, Converter={StaticResource BoolVis}}">
-                                    <TextBlock Text="{Binding CurrentQuestion.GuiFlavor}" FontSize="11" Foreground="{StaticResource Accent}"/>
+                                    <TextBlock Text="{Binding CurrentQuestion.GuiFlavor}" Style="{StaticResource BadgeTextAccent}"/>
                                 </Border>
                             </StackPanel>
                             <TextBlock Text="{Binding CurrentQuestion.Concept}" Style="{StaticResource Muted}" Margin="0,3,0,0"/>
@@ -573,17 +709,32 @@
                                             Command="{Binding ShowIlCommand}"/>
                                 </WrapPanel>
 
-                                <Border Style="{StaticResource Card}" Margin="0,14,0,0"
-                                        Visibility="{Binding CurrentQuestion.ShowFeedback, Converter={StaticResource BoolVis}}">
+                                <!-- результат проверки: зелёная выноска при верном ответе, кирпичная — при неверном; цвет дублируется значком и словом -->
+                                <ContentControl Margin="0,14,0,0" Visibility="{Binding CurrentQuestion.ShowFeedback, Converter={StaticResource BoolVis}}">
+                                    <ContentControl.Style>
+                                        <Style TargetType="ContentControl" BasedOn="{StaticResource CalloutBad}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentQuestion.IsCorrect}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource GoodSoft}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource Good}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ContentControl.Style>
                                     <StackPanel>
-                                        <TextBlock Text="{Binding CurrentQuestion.IsCorrect, Converter={StaticResource CorrectMark}}"
-                                                   Style="{StaticResource H3}"
-                                                   Foreground="{Binding CurrentQuestion.IsCorrect, Converter={StaticResource HealthForAnswer}}"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Style="{StaticResource Icon}" FontSize="14" Margin="0,0,8,0"
+                                                       Text="{Binding CurrentQuestion.IsCorrect, Converter={StaticResource CorrectGlyph}}"
+                                                       Foreground="{Binding CurrentQuestion.IsCorrect, Converter={StaticResource HealthForAnswer}}"/>
+                                            <TextBlock Text="{Binding CurrentQuestion.IsCorrect, Converter={StaticResource CorrectMark}}"
+                                                       Style="{StaticResource H3}"
+                                                       Foreground="{Binding CurrentQuestion.IsCorrect, Converter={StaticResource HealthForAnswer}}"/>
+                                        </StackPanel>
                                         <TextBlock Style="{StaticResource Muted}" Margin="0,6,0,0"
                                                    Text="{Binding CurrentQuestion.CorrectAnswerText, StringFormat={}эталон: {0}}"/>
                                         <TextBlock Text="{Binding CurrentQuestion.ExplanationText}" Style="{StaticResource Body}" Margin="0,6,0,0"/>
                                     </StackPanel>
-                                </Border>
+                                </ContentControl>
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
@@ -592,8 +743,14 @@
                     <Border Grid.Row="1" Background="{StaticResource BgSoft}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="16,12" Panel.ZIndex="3">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource PrimaryButton}" Content="▶ Запустить пример"
-                                        Command="{Binding RunExampleCommand}"/>
+                                <Button Style="{StaticResource RunButton}" Command="{Binding RunExampleCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Style="{StaticResource Icon}" Text="&#xE768;" FontSize="11" Margin="0,0,8,0"
+                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                        <TextBlock Text="Запустить пример" FontSize="13.5" FontWeight="SemiBold" LineHeight="NaN"
+                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                    </StackPanel>
+                                </Button>
                                 <Button Style="{StaticResource FlatButton}" Content="очистить вывод" Margin="8,0,0,0"
                                         Command="{Binding ClearRunCommand}"/>
                             </StackPanel>
@@ -622,8 +779,18 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding UpdateStatus}" Style="{StaticResource Muted}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,14,0"
-                           Text="→ следующий урок: стрелка вправо · запустить пример: F5"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <Border Style="{StaticResource Chip}" Margin="0,0,6,0" Padding="7,1" VerticalAlignment="Center" CornerRadius="4"
+                            Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineStrong}" BorderThickness="1,1,1,2">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE72A;" FontSize="10" Foreground="{StaticResource Text}"/>
+                    </Border>
+                    <TextBlock Style="{StaticResource Muted}" Text="следующий урок" VerticalAlignment="Center" Margin="0,0,18,0"/>
+                    <Border Style="{StaticResource Chip}" Margin="0,0,6,0" Padding="7,1" VerticalAlignment="Center" CornerRadius="4"
+                            Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineStrong}" BorderThickness="1,1,1,2">
+                        <TextBlock Style="{StaticResource BadgeText}" Text="F5" Foreground="{StaticResource Text}" FontFamily="{StaticResource CodeFont}"/>
+                    </Border>
+                    <TextBlock Style="{StaticResource Muted}" Text="запустить пример" VerticalAlignment="Center"/>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

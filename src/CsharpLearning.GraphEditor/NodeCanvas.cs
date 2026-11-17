@@ -135,7 +135,7 @@ public sealed class NodeCanvas : Grid
     {
         var dots = new GeometryDrawing(
             CodeRender.Solid("#FF2B303C"), null, new EllipseGeometry(new Point(1, 1), 1.1, 1.1));
-        var bg = new GeometryDrawing(CodeRender.Solid("#FF14161D"), null, new RectangleGeometry(new Rect(0, 0, 24, 24)));
+        var bg = new GeometryDrawing(CodeRender.Solid("#FF11141A"), null, new RectangleGeometry(new Rect(0, 0, 24, 24)));
         var group = new DrawingGroup();
         group.Children.Add(bg);
         group.Children.Add(dots);
@@ -501,7 +501,7 @@ public sealed class NodeCanvas : Grid
         _marqueeStart = e.GetPosition(this);
         _marqueeRect = new Rectangle
         {
-            Stroke = CodeRender.Solid("#FF56B4E9"), StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 3, 2 },
+            Stroke = CodeRender.Solid("#FF6AA9E0"), StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 3, 2 },
             Fill = CodeRender.Solid("#2256B4E9"), Width = 0, Height = 0,
         };
         _overlay.Children.Add(_marqueeRect);

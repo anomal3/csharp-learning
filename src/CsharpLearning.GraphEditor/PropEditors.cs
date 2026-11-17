@@ -11,9 +11,9 @@ public static class PropEditors
     public static TextBox Box(string text, double width) => new()
     {
         Text = text, Width = width, Height = 24, FontSize = 13, Padding = new Thickness(6, 1, 6, 1),
-        Background = CodeRender.Solid("#FF14161D"), Foreground = CodeRender.Solid("#FFE9ECF2"),
-        BorderBrush = CodeRender.Solid("#FF3A4152"), CaretBrush = CodeRender.Solid("#FF56B4E9"),
-        VerticalContentAlignment = VerticalAlignment.Center, SelectionBrush = CodeRender.Solid("#FF56B4E9"),
+        Background = CodeRender.Solid("#FF11141A"), Foreground = CodeRender.Solid("#FFE8ECF2"),
+        BorderBrush = CodeRender.Solid("#FF303746"), CaretBrush = CodeRender.Solid("#FF6AA9E0"),
+        VerticalContentAlignment = VerticalAlignment.Center, SelectionBrush = CodeRender.Solid("#FF6AA9E0"),
     };
 
     public static ComboBox Combo(IEnumerable<string> items, string value, bool editable, double width, Action<string> onChanged)
@@ -69,7 +69,7 @@ public static class PropEditors
             }
             case PropEditor.Bool:
             {
-                var cb = new CheckBox { IsChecked = value == "true", VerticalAlignment = VerticalAlignment.Center, Content = pd.Label, Foreground = CodeRender.Solid("#FFE9ECF2"), FontSize = 13 };
+                var cb = new CheckBox { IsChecked = value == "true", VerticalAlignment = VerticalAlignment.Center, Content = pd.Label, Foreground = CodeRender.Solid("#FFE8ECF2"), FontSize = 13 };
                 cb.Click += (s, e) => Commit(cb.IsChecked == true ? "true" : "false");
                 return cb;
             }

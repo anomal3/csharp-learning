@@ -2,20 +2,43 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-    <!-- Палитра: спокойный «учебный» тёмный режим, читаемый часами -->
-    <Color x:Key="BgColor">#FF1B1D24</Color>
-    <Color x:Key="BgSoftColor">#FF22252E</Color>
-    <Color x:Key="CardColor">#FF272B36</Color>
-    <Color x:Key="CardSoftColor">#FF2E3341</Color>
-    <Color x:Key="LineColor">#FF3A4152</Color>
-    <Color x:Key="TextColor">#FFE9ECF2</Color>
-    <Color x:Key="TextMutedColor">#FF9AA4B8</Color>
-    <Color x:Key="AccentColor">#FF56B4E9</Color>
-    <Color x:Key="AccentSoftColor">#FF2C4A63</Color>
-    <Color x:Key="GoodColor">#FF63C77A</Color>
-    <Color x:Key="WarnColor">#FFE8B04C</Color>
-    <Color x:Key="BadColor">#FFE4695F</Color>
-    <Color x:Key="CodeBgColor">#FF14161D</Color>
+    <!--
+      Палитра: строгий тёмный режим, читаемый часами.
+      Принцип: нейтральные «сланцевые» слои + ОДИН холодный акцент (стальной синий).
+      Зелёный / янтарный / кирпичный — только для статусов (верно, долго, ошибка), каждый в трёх тонах:
+      основной (текст, значок), мягкий (фон плашки), линия (рамка плашки).
+      Слои от тёмного к светлому: Bg → BgSoft → Card → CardSoft → CardHover.
+    -->
+    <Color x:Key="BgColor">#FF14171D</Color>
+    <Color x:Key="BgSoftColor">#FF191D25</Color>
+    <Color x:Key="CardColor">#FF1F242E</Color>
+    <Color x:Key="CardSoftColor">#FF262C38</Color>
+    <Color x:Key="CardHoverColor">#FF2D3441</Color>
+    <Color x:Key="LineColor">#FF303746</Color>
+    <Color x:Key="LineStrongColor">#FF444E62</Color>
+    <Color x:Key="TextColor">#FFE8ECF2</Color>
+    <Color x:Key="TextMutedColor">#FF98A3B5</Color>
+    <Color x:Key="TextDimColor">#FF707B8F</Color>
+
+    <Color x:Key="AccentColor">#FF6AA9E0</Color>
+    <Color x:Key="AccentStrongColor">#FF2F6DA3</Color>
+    <Color x:Key="AccentHoverColor">#FF3A7DB8</Color>
+    <Color x:Key="AccentSoftColor">#FF1C2B3D</Color>
+    <Color x:Key="AccentLineColor">#FF2F5278</Color>
+
+    <Color x:Key="GoodColor">#FF5BB98C</Color>
+    <Color x:Key="GoodSoftColor">#FF182A24</Color>
+    <Color x:Key="GoodLineColor">#FF2C5444</Color>
+
+    <Color x:Key="WarnColor">#FFD9A441</Color>
+    <Color x:Key="WarnSoftColor">#FF2B2418</Color>
+    <Color x:Key="WarnLineColor">#FF5A4821</Color>
+
+    <Color x:Key="BadColor">#FFDC736C</Color>
+    <Color x:Key="BadSoftColor">#FF2E1D20</Color>
+    <Color x:Key="BadLineColor">#FF63393B</Color>
+
+    <Color x:Key="CodeBgColor">#FF11141A</Color>
 
     <SolidColorBrush x:Key="Bg" Color="{StaticResource BgColor}"/>
     <SolidColorBrush x:Key="BgSoft" Color="{StaticResource BgSoftColor}"/>
@@ -23,18 +46,42 @@
          одноимённые стили Border (Card / CardSoft) из Styles/Controls.xaml. -->
     <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}"/>
     <SolidColorBrush x:Key="CardSoftBrush" Color="{StaticResource CardSoftColor}"/>
+    <SolidColorBrush x:Key="CardHoverBrush" Color="{StaticResource CardHoverColor}"/>
     <SolidColorBrush x:Key="Line" Color="{StaticResource LineColor}"/>
+    <SolidColorBrush x:Key="LineStrong" Color="{StaticResource LineStrongColor}"/>
     <SolidColorBrush x:Key="Text" Color="{StaticResource TextColor}"/>
     <SolidColorBrush x:Key="TextMuted" Color="{StaticResource TextMutedColor}"/>
+    <SolidColorBrush x:Key="TextDim" Color="{StaticResource TextDimColor}"/>
+
     <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="AccentStrong" Color="{StaticResource AccentStrongColor}"/>
+    <SolidColorBrush x:Key="AccentHover" Color="{StaticResource AccentHoverColor}"/>
     <SolidColorBrush x:Key="AccentSoft" Color="{StaticResource AccentSoftColor}"/>
+    <SolidColorBrush x:Key="AccentLine" Color="{StaticResource AccentLineColor}"/>
+
     <SolidColorBrush x:Key="Good" Color="{StaticResource GoodColor}"/>
+    <SolidColorBrush x:Key="GoodSoft" Color="{StaticResource GoodSoftColor}"/>
+    <SolidColorBrush x:Key="GoodLine" Color="{StaticResource GoodLineColor}"/>
+
     <SolidColorBrush x:Key="Warn" Color="{StaticResource WarnColor}"/>
+    <SolidColorBrush x:Key="WarnSoft" Color="{StaticResource WarnSoftColor}"/>
+    <SolidColorBrush x:Key="WarnLine" Color="{StaticResource WarnLineColor}"/>
+
     <SolidColorBrush x:Key="Bad" Color="{StaticResource BadColor}"/>
+    <SolidColorBrush x:Key="BadSoft" Color="{StaticResource BadSoftColor}"/>
+    <SolidColorBrush x:Key="BadLine" Color="{StaticResource BadLineColor}"/>
+
+    <!-- «нейтральный» тон для плашек: тот же набор из трёх кистей, что у остальных тонов -->
+    <SolidColorBrush x:Key="Neutral" Color="{StaticResource TextMutedColor}"/>
+    <SolidColorBrush x:Key="NeutralSoft" Color="{StaticResource CardSoftColor}"/>
+    <SolidColorBrush x:Key="NeutralLine" Color="{StaticResource LineColor}"/>
+
     <SolidColorBrush x:Key="CodeBg" Color="{StaticResource CodeBgColor}"/>
 
     <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
     <FontFamily x:Key="CodeFont">Consolas, Cascadia Mono, Courier New</FontFamily>
+    <!-- значки: один набор (Segoe MDL2 Assets есть в Windows 10 и 11), вместо эмодзи -->
+    <FontFamily x:Key="IconFont">Segoe MDL2 Assets, Segoe Fluent Icons</FontFamily>
     <sys:Double x:Key="UiSize">14</sys:Double>
     <sys:Double x:Key="CodeSize">13</sys:Double>
 
@@ -53,10 +100,10 @@
         <Setter Property="LineHeight" Value="32"/>
     </Style>
 
+    <!-- заголовки разделов — белые, акцент остаётся только у короткой линии над ними -->
     <Style x:Key="H2" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="19"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
     </Style>
 
     <Style x:Key="H3" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -72,6 +119,22 @@
     <Style x:Key="Body" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="14.5"/>
         <Setter Property="LineHeight" Value="22"/>
+    </Style>
+
+    <!-- мелкая подпись-«надзаголовок» над блоком -->
+    <Style x:Key="Overline" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextDim}"/>
+    </Style>
+
+    <Style x:Key="Icon" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+        <Setter Property="TextWrapping" Value="NoWrap"/>
+        <Setter Property="LineHeight" Value="NaN"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
     <Style x:Key="CodeText" TargetType="TextBlock">

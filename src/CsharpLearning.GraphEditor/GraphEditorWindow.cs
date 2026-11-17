@@ -10,7 +10,7 @@ public sealed class GraphEditorWindow : Window
     {
         Title = "Граф-режим — визуальное программирование на C#";
         Width = 1500; Height = 900; MinWidth = 1000; MinHeight = 600;
-        Background = CodeRender.Solid("#FF1B1D24");
+        Background = CodeRender.Solid("#FF14171D");
         UseLayoutRounding = true;
 
         var view = new GraphEditorView();

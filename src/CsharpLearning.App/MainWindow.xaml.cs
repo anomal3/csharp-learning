@@ -91,8 +91,8 @@ public partial class MainWindow : Window
     void UpdateLanguageButtons()
     {
         bool rust = _vm?.Profile.Id == "rust";
-        LangCsBtn.Style = (Style)FindResource(rust ? "FlatButton" : "PrimaryButton");
-        LangRustBtn.Style = (Style)FindResource(rust ? "PrimaryButton" : "FlatButton");
+        LangCsBtn.Style = (Style)FindResource(rust ? "SegmentButton" : "SegmentButtonActive");
+        LangRustBtn.Style = (Style)FindResource(rust ? "SegmentButtonActive" : "SegmentButton");
     }
 
     /// <summary>Ищет новую версию программы; при согласии скачивает установщик, запускает его и закрывает приложение.</summary>
@@ -175,22 +175,34 @@ public partial class MainWindow : Window
         {
             bool on = key == _mode;
             bool available = IsModeAvailable(key);
-            var grey = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x6B, 0x72, 0x80));
-            var red = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xD9, 0x4B, 0x4B));
-            var label = new TextBlock { Text = title, FontSize = 13.5, FontWeight = FontWeights.SemiBold, Foreground = available ? (System.Windows.Media.Brush)FindResource(on ? "Text" : "TextMuted") : grey };
+            // вкладки «с подчёркиванием»: активная — светлый текст и акцентная линия снизу;
+            // недоступная — приглушена, без красных рамок (причина — в подсказке)
+            System.Windows.Media.Brush Res(string name) => (System.Windows.Media.Brush)FindResource(name);
+            var label = new TextBlock
+            {
+                Text = title, FontSize = 13.5, FontWeight = on ? FontWeights.SemiBold : FontWeights.Normal, LineHeight = double.NaN,
+                Foreground = Res(!available ? "TextDim" : on ? "Text" : "TextMuted"),
+            };
             var tab = new Border
             {
-                Child = label, Padding = new Thickness(16, 8, 16, 8), Margin = new Thickness(0, 0, 6, 0),
-                Cursor = available ? System.Windows.Input.Cursors.Hand : System.Windows.Input.Cursors.No,
+                Child = label, Padding = new Thickness(14, 7, 14, 7), Margin = new Thickness(0, 0, 4, 0),
+                Cursor = available ? System.Windows.Input.Cursors.Hand : System.Windows.Input.Cursors.Arrow,
                 ToolTip = available ? tip : "Для этого урока нет примеров — используйте вкладку «Консольное приложение»",
-                CornerRadius = new CornerRadius(8, 8, 0, 0),
-                Background = (System.Windows.Media.Brush)FindResource(on && available ? "CardBrush" : "BgSoft"),
-                BorderBrush = available ? (System.Windows.Media.Brush)FindResource(on ? "Accent" : "Line") : red,
-                BorderThickness = available ? new Thickness(0, on ? 3 : 0, 0, 0) : new Thickness(1),
-                Opacity = available ? 1 : 0.8,
+                CornerRadius = new CornerRadius(6, 6, 0, 0),
+                Background = on && available ? Res("CardBrush") : System.Windows.Media.Brushes.Transparent,
+                BorderBrush = on && available ? Res("Accent") : System.Windows.Media.Brushes.Transparent,
+                BorderThickness = new Thickness(0, 0, 0, 2),
             };
             string k = key;
-            if (available) tab.MouseLeftButtonUp += (s, e) => SetMode(k);
+            if (available)
+            {
+                tab.MouseLeftButtonUp += (s, e) => SetMode(k);
+                if (!on)
+                {
+                    tab.MouseEnter += (s, e) => { tab.Background = Res("CardSoftBrush"); label.Foreground = Res("Text"); };
+                    tab.MouseLeave += (s, e) => { tab.Background = System.Windows.Media.Brushes.Transparent; label.Foreground = Res("TextMuted"); };
+                }
+            }
             ModeTabs.Children.Add(tab);
         }
     }
@@ -241,7 +253,7 @@ public partial class MainWindow : Window
             LeftPanel.Visibility = Visibility.Visible;
         }
         _leftOpen = !_leftOpen;
-        ToggleLeftBtn.Content = _leftOpen ? "◧ Оглавление" : "▶ Оглавление";
+        LeftIcon.Text = _leftOpen ? "" : "";   // стрелка показывает, куда уедет панель
     }
 
     void OnToggleRight(object sender, RoutedEventArgs e)
@@ -262,7 +274,7 @@ public partial class MainWindow : Window
             RightPanel.Visibility = Visibility.Visible;
         }
         _rightOpen = !_rightOpen;
-        ToggleRightBtn.Content = _rightOpen ? "Пример ◨" : "◀ Пример";
+        RightIcon.Text = _rightOpen ? "" : "";
     }
 
     // ---------- подсказки при вводе ответа («IntelliSense» для вывода программы) ----------

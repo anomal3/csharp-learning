@@ -114,8 +114,8 @@ public sealed class NodeVisual : Canvas
 
         // ---------- корпус ----------
         _frame.Width = w; _frame.Height = NodeHeight;
-        _frame.Background = new LinearGradientBrush((Color)ColorConverter.ConvertFromString("#FF2B3040"), (Color)ColorConverter.ConvertFromString("#FF232733"), 90);
-        _frame.BorderBrush = CodeRender.Solid("#FF4A5266");
+        _frame.Background = new LinearGradientBrush((Color)ColorConverter.ConvertFromString("#FF262C38"), (Color)ColorConverter.ConvertFromString("#FF1F242E"), 90);
+        _frame.BorderBrush = CodeRender.Solid("#FF444E62");
         _frame.BorderThickness = new Thickness(1.5);
         _frame.CornerRadius = new CornerRadius(10);
         _frame.Effect = _shadow;
@@ -183,9 +183,9 @@ public sealed class NodeVisual : Canvas
     {
         set
         {
-            _frame.BorderBrush = CodeRender.Solid(value ? "#FF56B4E9" : "#FF4A5266");
+            _frame.BorderBrush = CodeRender.Solid(value ? "#FF6AA9E0" : "#FF444E62");
             _frame.BorderThickness = new Thickness(value ? 2.4 : 1.5);
-            _shadow.Color = value ? (Color)ColorConverter.ConvertFromString("#FF56B4E9") : Colors.Black;
+            _shadow.Color = value ? (Color)ColorConverter.ConvertFromString("#FF6AA9E0") : Colors.Black;
             _shadow.Opacity = value ? 0.7 : 0.5;
             _shadow.BlurRadius = value ? 22 : 16;
         }
@@ -251,7 +251,7 @@ public sealed class NodeVisual : Canvas
     public static FrameworkElement MakeExecDot(bool filled) => new Polygon
     {
         Points = new PointCollection { new(0, 0), new(9, 0), new(16, 8), new(9, 16), new(0, 16) },
-        Fill = filled ? Brushes.White : CodeRender.Solid("#FF262A35"),
+        Fill = filled ? Brushes.White : CodeRender.Solid("#FF1F242E"),
         Stroke = Brushes.White, StrokeThickness = 1.8, Width = 16, Height = 16, Stretch = Stretch.None,
     };
 
@@ -260,7 +260,7 @@ public sealed class NodeVisual : Canvas
         var c = CodeRender.Solid(GraphTypes.Color(type));
         return new Ellipse
         {
-            Width = 15, Height = 15, Fill = filled ? c : CodeRender.Solid("#FF262A35"), Stroke = c, StrokeThickness = 2.2,
+            Width = 15, Height = 15, Fill = filled ? c : CodeRender.Solid("#FF1F242E"), Stroke = c, StrokeThickness = 2.2,
         };
     }
 
@@ -269,7 +269,7 @@ public sealed class NodeVisual : Canvas
     {
         if (!Dots.TryGetValue(Key(pin), out var dot)) return;
         var color = pin.IsExec ? Brushes.White : CodeRender.Solid(GraphTypes.Color(pin.Type));
-        if (dot is Shape s) s.Fill = filled ? color : CodeRender.Solid("#FF262A35");
+        if (dot is Shape s) s.Fill = filled ? color : CodeRender.Solid("#FF1F242E");
     }
 
     FrameworkElement? MakePinEditor(Pin pin, NodeVisualContext ctx)

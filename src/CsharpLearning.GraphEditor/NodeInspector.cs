@@ -13,7 +13,7 @@ public sealed class NodeInspector : Border
     public NodeInspector()
     {
         Background = CodeRender.Solid("#FF1F232D");
-        BorderBrush = CodeRender.Solid("#FF3A4152");
+        BorderBrush = CodeRender.Solid("#FF303746");
         BorderThickness = new Thickness(0, 0, 0, 1);
         Child = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = _body, MaxHeight = 300 };
         ShowNothing();
@@ -22,8 +22,8 @@ public sealed class NodeInspector : Border
     public void ShowNothing(string? methodHint = null)
     {
         _body.Children.Clear();
-        _body.Children.Add(Text("Свойства ноды", 14, "#FFE9ECF2", bold: true));
-        _body.Children.Add(Text(methodHint ?? "Выберите ноду на холсте — здесь появятся её описание и настройки.", 12.5, "#FF8C97AD", top: 5));
+        _body.Children.Add(Text("Свойства ноды", 14, "#FFE8ECF2", bold: true));
+        _body.Children.Add(Text(methodHint ?? "Выберите ноду на холсте — здесь появятся её описание и настройки.", 12.5, "#FF707B8F", top: 5));
     }
 
     /// <param name="changed">(нода, структурное ли изменение) — вызывается после правки свойства.</param>
@@ -41,11 +41,11 @@ public sealed class NodeInspector : Border
             Width = 28, Height = 28, CornerRadius = new CornerRadius(14), Background = CodeRender.Solid(spec.Color), Margin = new Thickness(0, 0, 10, 0),
             Child = new TextBlock { Text = spec.Icon, Foreground = CodeRender.Solid("#FF10131A"), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeights.Bold },
         });
-        head.Children.Add(Text(spec.Title(nctx), 14, "#FFE9ECF2", bold: true));
+        head.Children.Add(Text(spec.Title(nctx), 14, "#FFE8ECF2", bold: true));
         _body.Children.Add(head);
 
         string desc = NodeSpecs.Describe(node.Kind);
-        if (desc.Length > 0) _body.Children.Add(Text(desc, 12.5, "#FF9AA4B8", top: 8));
+        if (desc.Length > 0) _body.Children.Add(Text(desc, 12.5, "#FF98A3B5", top: 8));
 
         foreach (var pd in spec.Props)
         {

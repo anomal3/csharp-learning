@@ -26,9 +26,9 @@ public sealed class GraphEditorView : Grid
     readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal };
     readonly TextBlock _code = new() { FontFamily = new FontFamily("Consolas, Cascadia Mono, Courier New"), FontSize = 13, LineHeight = 19, LineStackingStrategy = LineStackingStrategy.BlockLineHeight, Foreground = CodeRender.Solid("#FFDCDCDC"), Margin = new Thickness(12, 10, 12, 10) };
     readonly ScrollViewer _codeScroll = new() { HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-    readonly TextBox _out = new() { IsReadOnly = true, FontFamily = new FontFamily("Consolas, Cascadia Mono"), FontSize = 12.5, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = CodeRender.Solid("#FF63C77A"), TextWrapping = TextWrapping.Wrap, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(10, 6, 10, 6) };
+    readonly TextBox _out = new() { IsReadOnly = true, FontFamily = new FontFamily("Consolas, Cascadia Mono"), FontSize = 12.5, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = CodeRender.Solid("#FF5BB98C"), TextWrapping = TextWrapping.Wrap, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(10, 6, 10, 6) };
     readonly ListBox _issues = new() { Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
-    readonly TextBlock _status = new() { Foreground = CodeRender.Solid("#FF9AA4B8"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+    readonly TextBlock _status = new() { Foreground = CodeRender.Solid("#FF98A3B5"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
     readonly TextBox _name;
     readonly Button _runBtn;
     readonly Button _undoBtn, _redoBtn;
@@ -36,7 +36,7 @@ public sealed class GraphEditorView : Grid
     readonly NodePalettePanel _palettePanel = new();
     readonly NodeInspector _inspector = new();
     readonly StackPanel _vars = new();
-    readonly TextBlock _varsTitle = new() { FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = CodeRender.Solid("#FFE9ECF2"), VerticalAlignment = VerticalAlignment.Center };
+    readonly TextBlock _varsTitle = new() { FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = CodeRender.Solid("#FFE8ECF2"), VerticalAlignment = VerticalAlignment.Center };
     Grid _projectPanel = null!;
     Border _tabProject = null!, _tabNodes = null!;
     Border _hint = null!;
@@ -62,24 +62,24 @@ public sealed class GraphEditorView : Grid
     public GraphEditorView()
     {
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/CsharpLearning.GraphEditor;component/Themes/GraphDark.xaml") });
-        Background = CodeRender.Solid("#FF1B1D24");
+        Background = CodeRender.Solid("#FF14171D");
         TextElement.SetFontFamily(this, new FontFamily("Segoe UI"));
         TextElement.SetFontSize(this, 13.5);
-        TextElement.SetForeground(this, CodeRender.Solid("#FFE9ECF2"));
+        TextElement.SetForeground(this, CodeRender.Solid("#FFE8ECF2"));
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
         // ---- панель инструментов ----
-        var bar = new Border { Background = CodeRender.Solid("#FF22252E"), BorderBrush = CodeRender.Solid("#FF3A4152"), BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(10, 7, 10, 7) };
+        var bar = new Border { Background = CodeRender.Solid("#FF191D25"), BorderBrush = CodeRender.Solid("#FF303746"), BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(10, 7, 10, 7) };
         var barPanel = new StackPanel { Orientation = Orientation.Horizontal };
         bar.Child = barPanel;
 
         _name = new TextBox
         {
             Width = 190, Height = 30, VerticalContentAlignment = VerticalAlignment.Center, Padding = new Thickness(7, 0, 7, 0), Margin = new Thickness(0, 0, 12, 0),
-            Background = CodeRender.Solid("#FF14161D"), Foreground = CodeRender.Solid("#FFE9ECF2"), BorderBrush = CodeRender.Solid("#FF3A4152"),
-            CaretBrush = CodeRender.Solid("#FF56B4E9"), ToolTip = "Название проекта", FontWeight = FontWeights.SemiBold,
+            Background = CodeRender.Solid("#FF11141A"), Foreground = CodeRender.Solid("#FFE8ECF2"), BorderBrush = CodeRender.Solid("#FF303746"),
+            CaretBrush = CodeRender.Solid("#FF6AA9E0"), ToolTip = "Название проекта", FontWeight = FontWeights.SemiBold,
         };
         _name.TextChanged += (s, e) => { if (!_restoring) { _p.Name = _name.Text; ScheduleSave(); } };
         barPanel.Children.Add(_name);
@@ -121,7 +121,7 @@ public sealed class GraphEditorView : Grid
         var center = new Grid();
         center.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         center.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-        var tabScroll = new ScrollViewer { HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = _tabs, Background = CodeRender.Solid("#FF1B1D24") };
+        var tabScroll = new ScrollViewer { HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = _tabs, Background = CodeRender.Solid("#FF14171D") };
         center.Children.Add(tabScroll);
         var canvasHost = new Grid();
         canvasHost.Children.Add(_canvas);
@@ -164,7 +164,7 @@ public sealed class GraphEditorView : Grid
     // ===================== построение панелей =====================
     FrameworkElement BuildLeft()
     {
-        var root = new Grid { Background = CodeRender.Solid("#FF22252E") };
+        var root = new Grid { Background = CodeRender.Solid("#FF191D25") };
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
@@ -197,7 +197,7 @@ public sealed class GraphEditorView : Grid
         Grid.SetRow(scroll, 1);
         _projectPanel.Children.Add(scroll);
 
-        var varsBox = new Border { Background = CodeRender.Solid("#FF1E212A"), BorderBrush = CodeRender.Solid("#FF3A4152"), BorderThickness = new Thickness(0, 1, 0, 0), Padding = new Thickness(10, 8, 8, 8) };
+        var varsBox = new Border { Background = CodeRender.Solid("#FF191D25"), BorderBrush = CodeRender.Solid("#FF303746"), BorderThickness = new Thickness(0, 1, 0, 0), Padding = new Thickness(10, 8, 8, 8) };
         var varsGrid = new Grid();
         varsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         varsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -243,8 +243,8 @@ public sealed class GraphEditorView : Grid
         _palettePanel.Visibility = project ? Visibility.Collapsed : Visibility.Visible;
         void Style(Border b, bool on)
         {
-            b.Background = CodeRender.Solid(on ? "#FF2C4A63" : "#FF2A2F3D");
-            ((TextBlock)b.Child).Foreground = CodeRender.Solid(on ? "#FFFFFFFF" : "#FF9AA4B8");
+            b.Background = CodeRender.Solid(on ? "#FF1C2B3D" : "#FF262C38");
+            ((TextBlock)b.Child).Foreground = CodeRender.Solid(on ? "#FFFFFFFF" : "#FF98A3B5");
             b.Margin = new Thickness(Grid.GetColumn(b) == 0 ? 0 : 3, 0, Grid.GetColumn(b) == 0 ? 3 : 0, 0);
         }
         Style(_tabProject, project);
@@ -253,7 +253,7 @@ public sealed class GraphEditorView : Grid
 
     FrameworkElement BuildRight()
     {
-        var root = new Grid { Background = CodeRender.Solid("#FF191C24") };
+        var root = new Grid { Background = CodeRender.Solid("#FF151920") };
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -288,7 +288,7 @@ public sealed class GraphEditorView : Grid
         void Step(string n, string text)
         {
             var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
-            row.Children.Add(new Border { Width = 20, Height = 20, CornerRadius = new CornerRadius(10), Background = CodeRender.Solid("#FF56B4E9"), Margin = new Thickness(0, 0, 9, 0),
+            row.Children.Add(new Border { Width = 20, Height = 20, CornerRadius = new CornerRadius(10), Background = CodeRender.Solid("#FF6AA9E0"), Margin = new Thickness(0, 0, 9, 0),
                 Child = new TextBlock { Text = n, Foreground = CodeRender.Solid("#FF10131A"), FontWeight = FontWeights.Bold, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } });
             row.Children.Add(new TextBlock { Text = text, FontSize = 12.5, Foreground = CodeRender.Solid("#FFC5CCDA"), VerticalAlignment = VerticalAlignment.Center });
             panel.Children.Add(row);
@@ -298,7 +298,7 @@ public sealed class GraphEditorView : Grid
         Step("3", "Соедините белые стрелки ▶ — это порядок действий; цветные кружки — данные.");
         Step("4", "Нажмите «▶ Запустить» — код справа выполнится, результат появится снизу.");
 
-        var close = new TextBlock { Text = "✕", Foreground = CodeRender.Solid("#FF8C97AD"), FontSize = 13, Cursor = Cursors.Hand, ToolTip = "Скрыть подсказку", Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Top };
+        var close = new TextBlock { Text = "✕", Foreground = CodeRender.Solid("#FF707B8F"), FontSize = 13, Cursor = Cursors.Hand, ToolTip = "Скрыть подсказку", Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Top };
         var row0 = new DockPanel();
         DockPanel.SetDock(close, Dock.Right);
         row0.Children.Add(close);
@@ -306,7 +306,7 @@ public sealed class GraphEditorView : Grid
 
         var b = new Border
         {
-            Child = row0, Background = new SolidColorBrush(Color.FromArgb(235, 31, 36, 48)), BorderBrush = CodeRender.Solid("#FF3A4152"), BorderThickness = new Thickness(1),
+            Child = row0, Background = new SolidColorBrush(Color.FromArgb(235, 31, 36, 48)), BorderBrush = CodeRender.Solid("#FF303746"), BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(10), Padding = new Thickness(16, 12, 14, 12), Margin = new Thickness(14),
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, MaxWidth = 560,
         };
@@ -321,23 +321,23 @@ public sealed class GraphEditorView : Grid
 
     FrameworkElement BuildBottom()
     {
-        var root = new Grid { Height = 170, Background = CodeRender.Solid("#FF191C24") };
+        var root = new Grid { Height = 170, Background = CodeRender.Solid("#FF151920") };
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        var line = new Border { Height = 1, Background = CodeRender.Solid("#FF3A4152"), VerticalAlignment = VerticalAlignment.Top };
+        var line = new Border { Height = 1, Background = CodeRender.Solid("#FF303746"), VerticalAlignment = VerticalAlignment.Top };
         Grid.SetColumnSpan(line, 2);
         root.Children.Add(line);
 
         _issuesTitle.Text = "Проблемы";
         _issuesTitle.Margin = new Thickness(12, 8, 0, 4);
-        _issuesTitle.FontWeight = FontWeights.SemiBold; _issuesTitle.Foreground = CodeRender.Solid("#FFE9ECF2"); _issuesTitle.FontSize = 12.5;
+        _issuesTitle.FontWeight = FontWeights.SemiBold; _issuesTitle.Foreground = CodeRender.Solid("#FFE8ECF2"); _issuesTitle.FontSize = 12.5;
         root.Children.Add(_issuesTitle);
 
         var outHead = new DockPanel { Margin = new Thickness(12, 8, 12, 4) };
-        outHead.Children.Add(new TextBlock { Text = "Вывод программы", FontWeight = FontWeights.SemiBold, Foreground = CodeRender.Solid("#FFE9ECF2"), FontSize = 12.5 });
+        outHead.Children.Add(new TextBlock { Text = "Вывод программы", FontWeight = FontWeights.SemiBold, Foreground = CodeRender.Solid("#FFE8ECF2"), FontSize = 12.5 });
         _status.HorizontalAlignment = HorizontalAlignment.Right;
         DockPanel.SetDock(_status, Dock.Right);
         outHead.Children.Insert(0, _status);
@@ -379,7 +379,7 @@ public sealed class GraphEditorView : Grid
     {
         var sp = new GridSplitter
         {
-            Width = 5, HorizontalAlignment = HorizontalAlignment.Stretch, Background = CodeRender.Solid("#FF1B1D24"),
+            Width = 5, HorizontalAlignment = HorizontalAlignment.Stretch, Background = CodeRender.Solid("#FF14171D"),
             ResizeBehavior = GridResizeBehavior.PreviousAndNext, Cursor = Cursors.SizeWE,
         };
         Grid.SetColumn(sp, col);
@@ -394,7 +394,7 @@ public sealed class GraphEditorView : Grid
         return b;
     }
 
-    static Border Sep() => new() { Width = 1, Margin = new Thickness(6, 3, 12, 3), Background = CodeRender.Solid("#FF3A4152") };
+    static Border Sep() => new() { Width = 1, Margin = new Thickness(6, 3, 12, 3), Background = CodeRender.Solid("#FF303746") };
 
     sealed class RelayCmd : ICommand
     {
@@ -554,7 +554,7 @@ public sealed class GraphEditorView : Grid
         foreach (var t in _open.ToList())
         {
             bool active = _current == t;
-            var title = new TextBlock { Text = t.method == MethodDef.CtorName ? t.cls + " (конструктор)" : $"{t.cls}.{t.method}", Foreground = CodeRender.Solid(active ? "#FFE9ECF2" : "#FF9AA4B8"), FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center };
+            var title = new TextBlock { Text = t.method == MethodDef.CtorName ? t.cls + " (конструктор)" : $"{t.cls}.{t.method}", Foreground = CodeRender.Solid(active ? "#FFE8ECF2" : "#FF98A3B5"), FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center };
             var close = new TextBlock { Text = "✕", Foreground = CodeRender.Solid("#FF7C879C"), FontSize = 11, Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Cursor = Cursors.Hand };
             var tab = t;
             close.MouseLeftButtonUp += (s, e) => { e.Handled = true; CloseTab(tab); };
@@ -563,8 +563,8 @@ public sealed class GraphEditorView : Grid
             var b = new Border
             {
                 Child = sp, Padding = new Thickness(14, 7, 12, 7), Cursor = Cursors.Hand,
-                Background = CodeRender.Solid(active ? "#FF14161D" : "#FF22252E"),
-                BorderBrush = CodeRender.Solid(active ? "#FF56B4E9" : "#FF3A4152"), BorderThickness = new Thickness(0, active ? 2 : 0, 1, 0),
+                Background = CodeRender.Solid(active ? "#FF11141A" : "#FF191D25"),
+                BorderBrush = CodeRender.Solid(active ? "#FF6AA9E0" : "#FF303746"), BorderThickness = new Thickness(0, active ? 2 : 0, 1, 0),
             };
             b.MouseLeftButtonUp += (s, e) =>
             {
@@ -583,9 +583,9 @@ public sealed class GraphEditorView : Grid
             var cls = c;
             bool isEntry = cls.Name == _p.EntryClass;
 
-            var head = new Border { Background = CodeRender.Solid("#FF2A2F3D"), CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 6, 6, 6), Margin = new Thickness(0, 8, 0, 3) };
+            var head = new Border { Background = CodeRender.Solid("#FF262C38"), CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 6, 6, 6), Margin = new Thickness(0, 8, 0, 3) };
             var row = new DockPanel();
-            var more = new TextBlock { Text = "⋯", FontSize = 16, Foreground = CodeRender.Solid("#FF9AA4B8"), Cursor = Cursors.Hand, Padding = new Thickness(6, 0, 4, 0), ToolTip = "Действия с классом", VerticalAlignment = VerticalAlignment.Center };
+            var more = new TextBlock { Text = "⋯", FontSize = 16, Foreground = CodeRender.Solid("#FF98A3B5"), Cursor = Cursors.Hand, Padding = new Thickness(6, 0, 4, 0), ToolTip = "Действия с классом", VerticalAlignment = VerticalAlignment.Center };
             DockPanel.SetDock(more, Dock.Right);
             row.Children.Add(more);
             string title = (cls.IsStatic ? "static " : "") + cls.Name + (string.IsNullOrEmpty(cls.BaseClass) ? "" : " : " + cls.BaseClass);
@@ -633,7 +633,7 @@ public sealed class GraphEditorView : Grid
     {
         Child = new TextBlock { Text = text, Foreground = CodeRender.Solid(color), FontSize = 12.5, TextTrimming = TextTrimming.CharacterEllipsis, FontFamily = new FontFamily("Consolas, Cascadia Mono") },
         Padding = new Thickness(14, 4, 6, 4), Cursor = Cursors.Hand, CornerRadius = new CornerRadius(4), Margin = new Thickness(0, 1, 0, 1),
-        Background = CodeRender.Solid(active ? "#FF2C4A63" : "#00000000"),
+        Background = CodeRender.Solid(active ? "#FF1C2B3D" : "#00000000"),
     };
 
     ContextMenu Menu(params (string title, Action act, bool enabled)[] items)
@@ -1018,7 +1018,7 @@ public sealed class GraphEditorView : Grid
         foreach (var prm in m.Params)
         {
             var name = prm.Name;
-            _vars.Children.Add(VarRow($"{prm.Name} : {prm.Type}", "параметр метода", "#FF9AA4B8",
+            _vars.Children.Add(VarRow($"{prm.Name} : {prm.Type}", "параметр метода", "#FF98A3B5",
                 () => AddVarNode("GetVar", name), null, null));
         }
         foreach (var loc in m.Locals.ToList())
@@ -1032,7 +1032,7 @@ public sealed class GraphEditorView : Grid
             _vars.Children.Add(Note("Переменная — коробка для значения. Нажмите «+ Переменная»: задайте имя, тип и начальное значение, потом берите её и меняйте нодами."));
     }
 
-    static TextBlock Note(string text) => new() { Text = text, Foreground = CodeRender.Solid("#FF8C97AD"), FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(2, 2, 4, 2) };
+    static TextBlock Note(string text) => new() { Text = text, Foreground = CodeRender.Solid("#FF707B8F"), FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(2, 2, 4, 2) };
 
     UIElement VarRow(string text, string tip, string color, Action get, Action? set, Action? edit, Action? del = null)
     {
@@ -1074,10 +1074,10 @@ public sealed class GraphEditorView : Grid
         {
             Child = new TextBlock { Text = text, FontSize = 11.5, Foreground = CodeRender.Solid("#FFC5CCDA") },
             Padding = new Thickness(7, 3, 7, 3), Margin = new Thickness(3, 0, 0, 0), CornerRadius = new CornerRadius(4), Cursor = Cursors.Hand,
-            Background = CodeRender.Solid("#FF2E3341"), BorderBrush = CodeRender.Solid("#FF3A4152"), BorderThickness = new Thickness(1), ToolTip = tip,
+            Background = CodeRender.Solid("#FF262C38"), BorderBrush = CodeRender.Solid("#FF303746"), BorderThickness = new Thickness(1), ToolTip = tip,
         };
-        b.MouseEnter += (s, e) => b.Background = CodeRender.Solid("#FF3A4152");
-        b.MouseLeave += (s, e) => b.Background = CodeRender.Solid("#FF2E3341");
+        b.MouseEnter += (s, e) => b.Background = CodeRender.Solid("#FF303746");
+        b.MouseLeave += (s, e) => b.Background = CodeRender.Solid("#FF262C38");
         b.MouseLeftButtonUp += (s, e) => act();
         return b;
     }
@@ -1210,7 +1210,7 @@ public sealed class GraphEditorView : Grid
     async Task RunAsync()
     {
         _runBtn.IsEnabled = false;
-        _out.Foreground = CodeRender.Solid("#FF9AA4B8");
+        _out.Foreground = CodeRender.Solid("#FF98A3B5");
         _out.Text = "Собираю код и запускаю…";
         try
         {
@@ -1240,7 +1240,7 @@ public sealed class GraphEditorView : Grid
             }
 
             string text = run!.Output.Trim();
-            _out.Foreground = CodeRender.Solid(run.Success ? "#FF63C77A" : "#FFE9573F");
+            _out.Foreground = CodeRender.Solid(run.Success ? "#FF5BB98C" : "#FFE9573F");
             _out.Text = (text.Length == 0 ? "(программа ничего не вывела)" : text) +
                         (run.Error.Trim().Length > 0 ? "\n\n" + run.Error.Trim() : "") +
                         (run.TimedOut ? "\n\nПрограмма не завершилась — похоже на бесконечный цикл." : "");
