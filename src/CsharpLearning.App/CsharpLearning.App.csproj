@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>CSharpCoach</AssemblyName>
     <RootNamespace>CsharpLearning.App</RootNamespace>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <Product>CSharpCoach</Product>
     <Company>BlueBox Production</Company>
     <ApplicationIcon></ApplicationIcon>
