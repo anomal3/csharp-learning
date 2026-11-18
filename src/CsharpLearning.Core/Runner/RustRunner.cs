@@ -33,11 +33,27 @@ public static class RustRunner
         var env = Environment.GetEnvironmentVariable("CSHARP_LEARNING_RUSTC");
         if (!string.IsNullOrWhiteSpace(env)) candidates.Add(env);
 
+        string exeName = OperatingSystem.IsWindows() ? "rustc.exe" : "rustc";
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        // Настоящий rustc из тулчейна rustup. В .cargo\bin лежит прокси (на Windows часто символическая ссылка на rustup.exe):
+        // из другого процесса её запуск может упасть с «недоверенная точка подключения», а сам прокси ещё и медленнее.
+        try
+        {
+            string rustupHome = Environment.GetEnvironmentVariable("RUSTUP_HOME") is { Length: > 0 } rh ? rh : Path.Combine(home, ".rustup");
+            string toolchains = Path.Combine(rustupHome, "toolchains");
+            if (Directory.Exists(toolchains))
+                candidates.AddRange(Directory.GetDirectories(toolchains)
+                    .OrderBy(d => Path.GetFileName(d).StartsWith("stable", StringComparison.OrdinalIgnoreCase) ? 0 : 1)   // stable раньше nightly
+                    .Select(d => Path.Combine(d, "bin", exeName)));
+        }
+        catch { }
+
         foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
         {
-            try { candidates.Add(Path.Combine(dir.Trim('"'), OperatingSystem.IsWindows() ? "rustc.exe" : "rustc")); } catch { }
+            try { candidates.Add(Path.Combine(dir.Trim('"'), exeName)); } catch { }
         }
-        candidates.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cargo", "bin", "rustc.exe"));
+        candidates.Add(Path.Combine(home, ".cargo", "bin", exeName));
 
         _rustc = candidates.FirstOrDefault(File.Exists);
         return _rustc;
@@ -56,9 +72,20 @@ public static class RustRunner
     {
         string source = Prepare(code);
         var rustc = FindRustc();
-        return rustc is not null
-            ? await RunLocalAsync(rustc, source, workRoot, runTimeout ?? TimeSpan.FromSeconds(8), ct)
-            : await RunPlaygroundAsync(source, ct);
+        if (rustc is not null)
+        {
+            // Windows может не дать запустить процесс: «недоверенная точка подключения» (путь через перенаправленную/виртуализированную папку),
+            // ссылка, антивирус. Пробуем другую рабочую папку (временную), и только потом уходим на Playground.
+            foreach (var root in new[] { workRoot, Path.Combine(Path.GetTempPath(), "CsharpLearning-run") }.Distinct())
+            {
+                try { return await RunLocalAsync(rustc, source, root, runTimeout ?? TimeSpan.FromSeconds(8), ct); }
+                catch (System.ComponentModel.Win32Exception) { }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
+            _rustc = null;   // дальше не мучаем локальный компилятор, пока приложение не перезапущено
+        }
+        return await RunPlaygroundAsync(source, ct);
     }
 
     // ---------- локальный rustc ----------
